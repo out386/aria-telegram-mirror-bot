@@ -1,0 +1,14 @@
+{
+  "name": "mirror-bot",
+  "version": "1.0.0",
+  "description": "A telegram bot to mirror files to Google Drive",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Ritayan Chakraborty",
+  "license": "MIT",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.30.0"
+  }
+}
