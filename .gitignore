@@ -1,3 +1,5 @@
-.env
+.constants.js
 node_modules/
 downloads/
+client_secret.json
+credentials.json
