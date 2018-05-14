@@ -120,7 +120,7 @@ function addUri (uri, callback) {
     });
 }
 
-module.exports.getAriaFiles = getAriaFilePath;
+module.exports.getAriaFilePath = getAriaFilePath;
 module.exports.openWebsocket = openWebsocket;
 module.exports.setOnDownloadStart = setOnDownloadStart;
 module.exports.setOnDownloadStop = setOnDownloadStop;

@@ -119,7 +119,6 @@ function download (msg, match) {
         sendMessage('Failed to start the download. ' + err['message']);
         downloadUtils.cleanupDownload();
       } else {
-        dlVars.downloadGid = gid;
         console.log('download: ' + match + ' gid: ' + gid);
       }
     });
@@ -148,6 +147,7 @@ function initAria2 () {
   });
 
   ariaTools.setOnDownloadStart((gid) => {
+    dlVars.downloadGid = gid;
     console.log('start', gid);
     sendMessage('Download started.');
   });
@@ -165,8 +165,10 @@ function initAria2 () {
         return;
       }
       if (file) {
-        console.log(file);
+        console.log('onDownloadComplete: ' + file);
         ariaTools.uploadFile(file, driveUploadCompleteCallback);
+      } else {
+        console.log('onDownloadComplete: No files');
       }
     });
   });
