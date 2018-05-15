@@ -1,6 +1,6 @@
 const driveAuth = require('./drive-auth.js');
-const fs = require('fs');
 const {google} = require('googleapis');
+const driveFile = require('./upload-file.js');
 
 function uploadFileOrFolder (filePath, mime, parent, callback) {
   driveAuth.call((err, auth) => {
@@ -13,32 +13,12 @@ function uploadFileOrFolder (filePath, mime, parent, callback) {
     if (mime === 'application/vnd.google-apps.folder') {
       createFolder(drive, filePath, parent, callback);
     } else {
-      createFile(drive, filePath, mime, parent, callback);
-    }
-  });
-}
-
-function createFile (drive, filePath, mime, parent, callback) {
-  var body = {
-    name: filePath.substring(filePath.lastIndexOf('/') + 1),
-    mimeType: mime,
-    parents: [parent]
-  };
-  var media = {
-    mimeType: mime,
-    body: fs.createReadStream(filePath)
-  };
-
-  drive.files.create({
-    fields: 'id',
-    requestBody: body,
-    media: media
-  },
-  (err, res) => {
-    if (err) {
-      callback(err);
-    } else {
-      callback(null, res.data.id);
+      driveFile.uploadGoogleDriveFile(parent, {
+        filePath: filePath,
+        mimeType: mime
+      })
+        .then(id => callback(null, id))
+        .catch(err => callback(err));
     }
   });
 }
