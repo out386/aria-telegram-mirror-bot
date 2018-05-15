@@ -147,6 +147,8 @@ function initAria2 () {
   });
 
   ariaTools.setOnDownloadStart((gid) => {
+    dlVars.isDownloading = true;
+    dlVars.isUploading = false;
     dlVars.downloadGid = gid;
     console.log('start', gid);
     sendMessage('Download started.');

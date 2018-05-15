@@ -65,8 +65,10 @@ function setDownloadVars (msg) {
 function findAriaFilePath (files) {
   var filePath = files[0]['path'];
   if (filePath.startsWith(constants.AIRA_DOWNLOAD_LOCATION)) {
-    // This is not a torrent's metadata
-    return filePath;
+    if (filePath.substring(filePath.lastIndexOf('.') + 1) !== 'torrent') {
+      // This is not a torrent's metadata
+      return filePath;
+    }
   } else {
     return null;
   }
