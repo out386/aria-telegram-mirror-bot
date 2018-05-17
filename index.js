@@ -4,6 +4,8 @@ const dlVars = require('./download_tools/vars.js');
 const ariaTools = require('./download_tools/aria-tools.js');
 const constants = require('./.constants.js');
 const msgTools = require('./msg-tools.js');
+const driveList = require('./drive/drive-list.js');
+const driveUtils = require('./drive/drive-utils.js');
 
 const options = {
   polling: true
@@ -51,6 +53,27 @@ bot.onText(/^\/mirrorStatus/i, (msg) => {
   } else {
     sendMessage(msg, 'You cannot use this bot here.');
   }
+});
+
+bot.onText(/^\/list (.+)/i, (msg, match) => {
+  var authorizedCode = msgTools.isAuthorized(msg);
+  if (authorizedCode > -1) {
+    driveList.listFiles(match[1], (err, res) => {
+      if (err) {
+        sendMessage(msg, 'Failed to fetch the list of files');
+      } else {
+        sendMessage(msg, res, 60000);
+      }
+    });
+  } else {
+    sendMessage(msg, 'You cannot use this bot here.');
+  }
+});
+
+bot.onText(/^\/getFolder/i, (msg) => {
+  sendMessage(msg,
+    '<a href = \'' + driveUtils.getFileLink(constants.GDRIVE_PARENT_DIR_ID, true) + '\'>Drive mirror folder</a>',
+    60000);
 });
 
 bot.onText(/^\/cancelMirror/i, (msg) => {
@@ -106,14 +129,15 @@ function download (msg, match) {
     });
 }
 
-function sendMessage (msg, message) {
+function sendMessage (msg, message, delay) {
+  if (!delay) delay = 5000;
   bot.sendMessage(msg.chat.id, message, {
     reply_to_message_id: msg.message_id,
     parse_mode: 'HTML'
   })
     .then((res) => {
-      msgTools.deleteMsg(bot, res);
-      msgTools.deleteMsg(bot, msg);
+      msgTools.deleteMsg(bot, res, delay);
+      msgTools.deleteMsg(bot, msg, delay);
     })
     .catch((ignored) => {});
 }

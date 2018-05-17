@@ -1,6 +1,7 @@
 const driveAuth = require('./drive-auth.js');
 const {google} = require('googleapis');
 const driveFile = require('./upload-file.js');
+const utils = require('./drive-utils.js');
 
 function uploadFileOrFolder (filePath, mime, parent, callback) {
   driveAuth.call((err, auth) => {
@@ -60,18 +61,10 @@ function getSharableLink (fileId, isFolder, callback) {
       if (err) {
         callback(err);
       } else {
-        callback(null, getFileLink(fileId, isFolder));
+        callback(null, utils.getFileLink(fileId, isFolder));
       }
     });
   });
-}
-
-function getFileLink (fileId, isFolder) {
-  if (isFolder) {
-    return 'https://drive.google.com/drive/folders/' + fileId;
-  } else {
-    return 'https://drive.google.com/uc?id=' + fileId + '&export=download';
-  }
 }
 
 module.exports.uploadFileOrFolder = uploadFileOrFolder;

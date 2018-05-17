@@ -1,8 +1,8 @@
 const dlVars = require('./download_tools/vars.js');
 const constants = require('./.constants.js');
 
-async function deleteMsg (bot, msg) {
-  await sleep(5000);
+async function deleteMsg (bot, msg, delay) {
+  await sleep(delay);
   bot.deleteMessage(msg.chat.id, msg.message_id)
     .catch(ignored => {});
 }
