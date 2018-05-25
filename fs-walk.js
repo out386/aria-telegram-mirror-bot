@@ -67,21 +67,24 @@ function walkSingleDir (path, files, parent, callback) {
     return;
   }
 
-  var position = files.length;
-  files.forEach(file => {
-    processFileOrDir(path + '/' + file, parent, (err, fileId) => {
+  var uploadNext = function (position) {
+    processFileOrDir(path + '/' + files[position], parent, (err, fileId) => {
       if (err) {
         callback(err);
       } else {
-        if (--position === 0) {
+        if (++position < files.length) {
+          uploadNext(position);
+        } else {
           callback(null);
         }
       }
     });
-  });
+  };
+  uploadNext(0);
 }
 
 function processFileOrDir (path, parent, callback) {
+  console.log('processFileOrDir: ' + path);
   fs.stat(path, (err, stat) => {
     if (err) {
       callback(err);
