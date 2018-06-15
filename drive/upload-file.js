@@ -32,7 +32,6 @@ function getChunks (filePath, start) {
    * @returns {string} file id if any
    */
 function uploadChunk (filePath, chunk, mineType, uploadUrl) {
-  console.log(`Uploading new chunk: ${chunk.clen} bytes`);
   return new Promise((resolve, reject) => {
     request.put({
       url: uploadUrl,
@@ -52,10 +51,8 @@ function uploadChunk (filePath, chunk, mineType, uploadUrl) {
         return reject(error);
       }
 
-      console.log(`Upload chunk finish: ${chunk.clen} bytes`);
       let headers = response.headers;
       if (headers && headers.range) {
-        console.log(`Look like google drive recieve not enough data, got headers range: ${JSON.stringify(headers.range)}`);
         let range = parseRange(headers.range);
         if (range && range.last != chunk.bend) {
           // range is diff, need to return to recreate chunks
@@ -131,25 +128,20 @@ function uploadGoogleDriveFile (parent, file) {
           let chunks = getChunks(file.filePath, 0);
           let fileId = null;
           try {
-            console.log(`Upload total ${chunks.length} chunks`);
             let i = 0;
             while (i < chunks.length) {
-              console.log('Uploading chunk ' + i + ' start: ' + chunks[i].bstart);
               // last chunk will return the file id
               fileId = await uploadChunk(file.filePath, chunks[i], file.mineType, response.headers.location);
               if ((typeof fileId === 'object') && (fileId !== null)) {
-                console.log('Got object from chunk upload, recreate chunks');
                 chunks = getChunks(file.filePath, fileId.last);
-                console.log(JSON.stringify(chunks));
                 i = 0;
               } else {
                 i++;
               }
-
-              console.log('');
             }
 
             if (fileId && fileId.length > 0) {
+              console.log('Upload complete');
               return resolve(fileId);
             } else {
               return reject(new Error('Uploaded and got invalid id for file ' + fileName));

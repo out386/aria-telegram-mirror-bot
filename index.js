@@ -153,11 +153,11 @@ function sendMessageReplyOriginal (message) {
 function initAria2 () {
   ariaTools.openWebsocket((err) => {
     if (err) {
-      console.log(' A2C: Failed to open websocket. Exiting.');
+      console.log('A2C: Failed to open websocket. Exiting.');
       process.exit(1);
     } else {
       websocketOpened = true;
-      console.log(' A2C: Websocket opened');
+      console.log('A2C: Websocket opened');
     }
   });
 
@@ -198,8 +198,16 @@ function initAria2 () {
 
 function driveUploadCompleteCallback (err, url, filePath, fileName) {
   if (err) {
-    console.log('uploadFile: ' + filePath + ': ' + JSON.stringify(err, null, 2));
-    sendMessageReplyOriginal('Failed to upload <code>' + fileName + '</code> to Drive');
+    var message;
+    try {
+      message = JSON.stringify(err, null, 2);
+    } catch (ignored) {
+      message = err;
+    }
+    console.log('uploadFile: ' + filePath + ': ' + message);
+    sendMessageReplyOriginal('Failed to make <code>' + fileName + '</code> publicly accessible.' +
+      message +
+      'If you have the Drive password, download it from the web UI. ');
   } else {
     sendMessageReplyOriginal('<a href=\'' + url + '\'>' + fileName + '</a>');
   }

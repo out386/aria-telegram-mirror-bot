@@ -7,6 +7,7 @@ const constants = require('../.constants.js');
  * Then unsets the 'isDownloading' and 'isUploading' flags.
  */
 function cleanupDownload () {
+  console.log('cleanupDownload: deleting');
   fs.remove(constants.AIRA_DOWNLOAD_LOCATION)
     .then(() => {
       fs.mkdir(constants.AIRA_DOWNLOAD_LOCATION)

@@ -99,6 +99,7 @@ function uploadFile (filePath, callback) {
   drive.uploadRecursive(filePath,
     constants.GDRIVE_PARENT_DIR_ID,
     (err, url) => {
+      console.log('uploadFile: deleting');
       callback(err, url, filePath, fileName);
       downloadUtils.cleanupDownload();
     });
