@@ -3,6 +3,8 @@ const drive = require('../fs-walk.js');
 const Aria2 = require('aria2');
 const dlVars = require('./vars.js');
 const constants = require('../.constants.js');
+const tar = require('../drive/tar.js');
+var diskspace = require('diskspace');
 
 const ariaOptions = {
   host: 'localhost',
@@ -86,16 +88,66 @@ function getStatus (gid, callback) {
     });
 }
 
+function getFileSize (gid, callback) {
+  aria2.tellStatus(gid,
+    ['totalLength'],
+    (err, res) => {
+      if (err) {
+        callback(err);
+      } else {
+        callback(null, res['totalLength']);
+      }
+    });
+}
+
 /**
  * Sets the upload flag, uploads the given path to Google Drive, then calls the callback,
  * cleans up the download directory, and unsets the download and upload flags.
+ * If a directory  is given, and isTar is set in vars, archives the directory to a tar
+ * before uploading. Archival fails if fileSize is more than or equal to half the free
+ * space on disk.
  * @param {string} filePath The path of the file or directory to upload
+ * @param {number} fileSize The size of the file
  * @param {function} callback The function to call with the link to the uploaded file
  */
-function uploadFile (filePath, callback) {
+function uploadFile (filePath, fileSize, callback) {
   dlVars.isUploading = true;
   var fileName = downloadUtils.getFileNameFromPath(filePath);
-  filePath = constants.AIRA_DOWNLOAD_LOCATION + '/' + fileName;
+  var realFilePath = constants.AIRA_DOWNLOAD_LOCATION + '/' + fileName;
+  if (dlVars.isTar) {
+    if (filePath === realFilePath) {
+      // If there is only one file, do not archive
+      driveUploadFile(realFilePath, fileName, callback);
+    } else {
+      diskspace.check(constants.ARIA_DOWNLOAD_LOCATION_ROOT, (err, res) => {
+        if (err) {
+          console.log('uploadFile: diskspace: ' + err);
+          // Could not archive, so upload normally
+          driveUploadFile(realFilePath, fileName, callback);
+          return;
+        }
+        if (res['free'] / 2 > fileSize) {
+          console.log('Starting archival');
+          var destName = fileName + '.tar';
+          tar.archive(fileName, destName, (err) => {
+            if (err) callback(err);
+            else {
+              console.log('Archive complete');
+              driveUploadFile(realFilePath + '.tar', destName, callback);
+            }
+          });
+        } else {
+          console.log('uploadFile: Not enough space, uploading without archiving');
+          driveUploadFile(realFilePath, fileName, callback);
+        }
+      });
+    }
+  } else {
+    driveUploadFile(realFilePath, fileName, callback);
+  }
+}
+
+function driveUploadFile (filePath, fileName, callback) {
   drive.uploadRecursive(filePath,
     constants.GDRIVE_PARENT_DIR_ID,
     (err, url) => {
@@ -131,3 +183,4 @@ module.exports.uploadFile = uploadFile;
 module.exports.addUri = addUri;
 module.exports.getStatus = getStatus;
 module.exports.stopDownload = stopDownload;
+module.exports.getFileSize = getFileSize;

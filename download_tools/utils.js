@@ -12,19 +12,21 @@ function cleanupDownload () {
     .then(() => {
       fs.mkdir(constants.AIRA_DOWNLOAD_LOCATION)
         .then(() => {
-          dlVars.isDownloading = undefined;
-          dlVars.isUploading = undefined;
+          resetVars();
         })
         .catch((ignored) => {
-          dlVars.isDownloading = undefined;
-          dlVars.isUploading = undefined;
+          resetVars();
         });
     })
     .catch((err) => {
       console.log('cleanupDownload: ' + JSON.stringify(err, null, 2));
-      dlVars.isDownloading = undefined;
-      dlVars.isUploading = undefined;
+      resetVars();
     });
+}
+
+function resetVars () {
+  dlVars.isDownloading = undefined;
+  dlVars.isUploading = undefined;
 }
 
 /**
@@ -45,8 +47,9 @@ function getFileNameFromPath (filePath) {
   return fileName;
 }
 
-function setDownloadVars (msg) {
+function setDownloadVars (msg, isTar) {
   dlVars.isDownloading = true;
+  dlVars.isTar = isTar;
   dlVars.tgFromId = msg.from.id;
   if (msg.from.username) {
     dlVars.tgUsername = '@' + msg.from.username;

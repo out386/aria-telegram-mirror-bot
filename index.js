@@ -15,14 +15,22 @@ var websocketOpened = false;
 
 initAria2();
 
+bot.onText(/^\/mirrortar (.+)/i, (msg, match) => {
+  mirror(msg, match, true);
+});
+
 bot.onText(/^\/mirror (.+)/i, (msg, match) => {
+  mirror(msg, match);
+});
+
+function mirror (msg, match, isTar) {
   var authorizedCode = msgTools.isAuthorized(msg);
   if (authorizedCode > -1) {
     if (websocketOpened) {
       if (dlVars.isDownloading) {
         sendMessage(msg, dlVars.tgUsername + ' is mirroring something. Please wait.');
       } else {
-        download(msg, match[1]);
+        download(msg, match[1], isTar);
       }
     } else {
       sendMessage(msg, 'Websocket isn\'t open. Can\'t download');
@@ -30,7 +38,7 @@ bot.onText(/^\/mirror (.+)/i, (msg, match) => {
   } else {
     sendMessage(msg, 'You cannot use this bot here.');
   }
-});
+}
 
 bot.onText(/^\/mirrorStatus/i, (msg) => {
   var authorizedCode = msgTools.isAuthorized(msg);
@@ -115,8 +123,8 @@ function cancelMirror (msg) {
   }
 }
 
-function download (msg, match) {
-  downloadUtils.setDownloadVars(msg);
+function download (msg, match, isTar) {
+  downloadUtils.setDownloadVars(msg, isTar);
   ariaTools.addUri([match],
     (err, gid) => {
       if (err) {
@@ -176,14 +184,22 @@ function initAria2 () {
   ariaTools.setOnDownloadComplete((gid) => {
     ariaTools.getAriaFilePath(gid, (err, file) => {
       if (err) {
-        console.log('onDownloadComplete: tellStatus: ' + JSON.stringify(err, null, 2));
+        console.log('onDownloadComplete: ' + JSON.stringify(err, null, 2));
         sendMessageReplyOriginal('Upload failed. Could not get downloaded files.');
         downloadUtils.cleanupDownload();
         return;
       }
       if (file) {
-        console.log('onDownloadComplete: ' + file);
-        ariaTools.uploadFile(file, driveUploadCompleteCallback);
+        ariaTools.getFileSize(gid, (err, size) => {
+          if (err) {
+            console.log('onDownloadComplete: ' + JSON.stringify(err, null, 2));
+            sendMessageReplyOriginal('Upload failed. Could not get file size.');
+            downloadUtils.cleanupDownload();
+            return;
+          }
+          console.log('onDownloadComplete: ' + file);
+          ariaTools.uploadFile(file, size, driveUploadCompleteCallback);
+        });
       } else {
         console.log('onDownloadComplete: No files');
       }
@@ -205,9 +221,7 @@ function driveUploadCompleteCallback (err, url, filePath, fileName) {
       message = err;
     }
     console.log('uploadFile: ' + filePath + ': ' + message);
-    sendMessageReplyOriginal('Failed to make <code>' + fileName + '</code> publicly accessible.' +
-      message +
-      'If you have the Drive password, download it from the web UI. ');
+    sendMessageReplyOriginal('Failed to upload <code>' + fileName + '</code> to Drive.' + message);
   } else {
     sendMessageReplyOriginal('<a href=\'' + url + '\'>' + fileName + '</a>');
   }
