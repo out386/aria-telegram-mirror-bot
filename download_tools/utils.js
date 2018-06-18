@@ -120,8 +120,17 @@ function formatSpeed (speed) {
   return speed + ' ' + suffix;
 }
 
+function isDownloadAllowed (url) {
+  var domain = url.startsWith('http') ? url.split('/')[2] : url.split('/')[0];
+  for (var i = 0; i < constants.ARIA_FILTERED_DOMAINS.length; i++) {
+    if (domain === constants.ARIA_FILTERED_DOMAINS[i]) return false;
+  }
+  return true;
+}
+
 module.exports.cleanupDownload = cleanupDownload;
 module.exports.getFileNameFromPath = getFileNameFromPath;
 module.exports.setDownloadVars = setDownloadVars;
 module.exports.findAriaFilePath = findAriaFilePath;
 module.exports.generateStatusMessage = generateStatusMessage;
+module.exports.isDownloadAllowed = isDownloadAllowed;

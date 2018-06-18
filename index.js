@@ -30,7 +30,11 @@ function mirror (msg, match, isTar) {
       if (dlVars.isDownloading) {
         sendMessage(msg, dlVars.tgUsername + ' is mirroring something. Please wait.');
       } else {
-        download(msg, match[1], isTar);
+        if (downloadUtils.isDownloadAllowed(match[1])) {
+          download(msg, match[1], isTar);
+        } else {
+          sendMessage(msg, 'You aren\'t allowed to download from that domain');
+        }
       }
     } else {
       sendMessage(msg, 'Websocket isn\'t open. Can\'t download');
