@@ -126,7 +126,7 @@ function uploadFile (filePath, fileSize, callback) {
           driveUploadFile(realFilePath, fileName, callback);
           return;
         }
-        if (res['free'] / 2 > fileSize) {
+        if (res['free'] > fileSize) {
           console.log('Starting archival');
           var destName = fileName + '.tar';
           tar.archive(fileName, destName, (err) => {
