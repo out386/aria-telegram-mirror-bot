@@ -23,7 +23,9 @@ function listFiles (fileName, callback) {
 
     drive.files.list({
       fields: 'files(id, name, mimeType)',
-      q: generateSearchQuery(fileName, constants.GDRIVE_PARENT_DIR_ID)
+      q: generateSearchQuery(fileName, constants.GDRIVE_PARENT_DIR_ID),
+      orderBy: 'modifiedTime desc',
+      pageSize: 20
     },
     (err, res) => {
       if (err) {
