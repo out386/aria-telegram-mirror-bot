@@ -153,7 +153,6 @@ function driveUploadFile (filePath, fileName, callback) {
     (err, url) => {
       console.log('uploadFile: deleting');
       callback(err, url, filePath, fileName);
-      downloadUtils.cleanupDownload();
     });
 }
 

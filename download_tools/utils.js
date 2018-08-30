@@ -27,6 +27,7 @@ function cleanupDownload () {
 function resetVars () {
   dlVars.isDownloading = undefined;
   dlVars.isUploading = undefined;
+  dlVars.statusMsgsList = [];
 }
 
 /**
@@ -47,7 +48,7 @@ function getFileNameFromPath (filePath) {
   return fileName;
 }
 
-function setDownloadVars (msg, isTar) {
+function setDownloadVars (msg, statusMsg, isTar) {
   dlVars.isDownloading = true;
   dlVars.isTar = isTar;
   dlVars.tgFromId = msg.from.id;
@@ -58,6 +59,53 @@ function setDownloadVars (msg, isTar) {
   }
   dlVars.tgChatId = msg.chat.id;
   dlVars.tgMessageId = msg.message_id;
+  dlVars.tgStatusMessageId = statusMsg.message_id;
+  dlVars.statusMsgsList.push({
+    message_id: statusMsg.message_id,
+    chat: {
+      id: statusMsg.chat.id,
+      all_members_are_administrators: statusMsg.chat.all_members_are_administrators
+    },
+    from: {id: statusMsg.from.id}
+  });
+}
+
+/**
+ * Checks if the given chat already has a status message.
+ * @param {Number|String} chatId The ID of the chat to search in
+ * @param {Number} startIndex Start searching from this index
+ * @returns {Number} The index of the status. -1 if not found
+ */
+function indexOfStatus (chatId, startIndex) {
+  var sList = dlVars.statusMsgsList;
+  for (var i = startIndex; i < sList.length; i++) {
+    if (sList[i].chat.id == chatId) return i;
+  }
+  return -1;
+}
+
+/**
+ * Registers a new download status message, and optionally deletes an old status message
+ * in the same chat.
+ * @param {Object} msg The Message to be added
+ */
+function addStatus (msg) {
+  dlVars.statusMsgsList.push({
+    message_id: msg.message_id,
+    chat: {
+      id: msg.chat.id,
+      all_members_are_administrators: msg.chat.all_members_are_administrators
+    },
+    from: {id: msg.from.id}
+  });
+}
+
+/**
+ * Unregisters a status message
+ * @param {Number} index The index of the message
+ */
+function deleteStatus (index) {
+  dlVars.statusMsgsList.splice(index, 1);
 }
 
 /**
@@ -134,3 +182,6 @@ module.exports.setDownloadVars = setDownloadVars;
 module.exports.findAriaFilePath = findAriaFilePath;
 module.exports.generateStatusMessage = generateStatusMessage;
 module.exports.isDownloadAllowed = isDownloadAllowed;
+module.exports.indexOfStatus = indexOfStatus;
+module.exports.addStatus = addStatus;
+module.exports.deleteStatus = deleteStatus;

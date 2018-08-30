@@ -12,6 +12,7 @@ const options = {
 };
 const bot = new TelegramBot(constants.TOKEN, options);
 var websocketOpened = false;
+var statusInterval;
 
 initAria2();
 
@@ -31,7 +32,7 @@ function mirror (msg, match, isTar) {
         sendMessage(msg, dlVars.tgUsername + ' is mirroring something. Please wait.');
       } else {
         if (downloadUtils.isDownloadAllowed(match[1])) {
-          download(msg, match[1], isTar);
+          prepDownload(msg, match[1], isTar);
         } else {
           sendMessage(msg, 'You aren\'t allowed to download from that domain');
         }
@@ -45,27 +46,38 @@ function mirror (msg, match, isTar) {
 }
 
 bot.onText(/^\/mirrorStatus/i, (msg) => {
-  var authorizedCode = msgTools.isAuthorized(msg);
+  sendStatusMessage(msg, undefined, 1);
+});
+
+function getStatus (msg, callback) {
+  var authorizedCode;
+  if (msg) {
+    authorizedCode = msgTools.isAuthorized(msg);
+  } else {
+    authorizedCode = 1;
+  }
+
   if (authorizedCode > -1) {
     if (dlVars.isDownloading) {
       if (dlVars.isUploading) {
-        sendMessage(msg, 'Upload in progress.');
+        callback(null, 'Upload in progress.');
       } else {
         ariaTools.getStatus(dlVars.downloadGid, (err, message) => {
           if (!err) {
-            sendMessage(msg, message);
+            callback(null, message);
           } else {
             console.log('status: ', err);
+            callback(err, null);
           }
         });
       }
     } else {
-      sendMessage(msg, 'No active downloads');
+      callback(null, 'No active downloads');
     }
   } else {
-    sendMessage(msg, 'You cannot use this bot here.');
+    callback(null, 'You cannot use this bot here.');
   }
-});
+}
 
 bot.onText(/^\/list (.+)/i, (msg, match) => {
   var authorizedCode = msgTools.isAuthorized(msg);
@@ -119,6 +131,7 @@ function cancelMirror (msg) {
           // Notify if this is not the chat the download started in
           sendMessage(msg, 'The download was canceled.');
         }
+        clearInterval(statusInterval);
         downloadUtils.cleanupDownload();
       });
     }
@@ -127,8 +140,14 @@ function cancelMirror (msg) {
   }
 }
 
+function prepDownload (msg, match, isTar) {
+  sendMessage(msg, 'Preparing', -1, statusMessage => {
+    downloadUtils.setDownloadVars(msg, statusMessage, isTar);
+    download(msg, match, isTar);
+  });
+}
+
 function download (msg, match, isTar) {
-  downloadUtils.setDownloadVars(msg, isTar);
   ariaTools.addUri([match],
     (err, gid) => {
       if (err) {
@@ -141,25 +160,74 @@ function download (msg, match, isTar) {
     });
 }
 
-function sendMessage (msg, message, delay) {
+function sendMessage (msg, text, delay, callback) {
   if (!delay) delay = 5000;
-  bot.sendMessage(msg.chat.id, message, {
+  bot.sendMessage(msg.chat.id, text, {
     reply_to_message_id: msg.message_id,
     parse_mode: 'HTML'
   })
     .then((res) => {
-      msgTools.deleteMsg(bot, res, delay);
-      msgTools.deleteMsg(bot, msg, delay);
+      if (callback) callback(res);
+      if (delay > -1) {
+        msgTools.deleteMsg(bot, res, delay);
+        msgTools.deleteMsg(bot, msg, delay);
+      }
     })
     .catch((ignored) => {});
 }
 
-function sendMessageReplyOriginal (message) {
+function sendMessageReplyOriginal (message, callback) {
   bot.sendMessage(dlVars.tgChatId, message, {
     reply_to_message_id: dlVars.tgMessageId,
     parse_mode: 'HTML'
   })
     .catch((ignored) => {});
+}
+
+function sendStatusMessage (msg) {
+  // Skipping 0, which is the reply to the download command message
+  var index = downloadUtils.indexOfStatus(msg.chat.id, 1);
+
+  if (index > -1) {
+    msgTools.deleteMsg(bot, dlVars.statusMsgsList[index]);
+    downloadUtils.deleteStatus(index);
+  }
+
+  getStatus(msg, (err, text) => {
+    if (!err) {
+      sendMessage(msg, text, 60000, message => {
+        downloadUtils.addStatus(message);
+      });
+    }
+  });
+}
+
+function updateStatusMessage (msg, text) {
+  if (!text) {
+    getStatus(msg, (err, text) => {
+      if (!err) editMessage(msg, text);
+    });
+  } else {
+    editMessage(msg, text);
+  }
+}
+
+function editMessage (msg, text) {
+  bot.editMessageText(text, {
+    chat_id: msg.chat.id,
+    message_id: msg.message_id,
+    parse_mode: 'HTML'
+  })
+    .catch(ignored => {});
+}
+
+function updateAllStatus () {
+  getStatus(null, (err, text) => {
+    if (err) return;
+    dlVars.statusMsgsList.forEach(status => {
+      editMessage(status, text);
+    });
+  });
 }
 
 function initAria2 () {
@@ -178,11 +246,15 @@ function initAria2 () {
     dlVars.isUploading = false;
     dlVars.downloadGid = gid;
     console.log('start', gid);
-    sendMessageReplyOriginal('Download started.');
+    // downloadUtils.setDownloadVars makes sure the first element in the list refers
+    // to the download command's message
+    updateStatusMessage(dlVars.statusMsgsList[0], 'Download started.');
+    statusInterval = setInterval(updateAllStatus, 4000);
   });
   ariaTools.setOnDownloadStop((gid) => {
     console.log('stop', gid);
     sendMessageReplyOriginal('Download stopped.');
+    clearInterval(statusInterval);
     downloadUtils.cleanupDownload();
   });
   ariaTools.setOnDownloadComplete((gid) => {
@@ -190,6 +262,7 @@ function initAria2 () {
       if (err) {
         console.log('onDownloadComplete: ' + JSON.stringify(err, null, 2));
         sendMessageReplyOriginal('Upload failed. Could not get downloaded files.');
+        clearInterval(statusInterval);
         downloadUtils.cleanupDownload();
         return;
       }
@@ -198,6 +271,7 @@ function initAria2 () {
           if (err) {
             console.log('onDownloadComplete: ' + JSON.stringify(err, null, 2));
             sendMessageReplyOriginal('Upload failed. Could not get file size.');
+            clearInterval(statusInterval);
             downloadUtils.cleanupDownload();
             return;
           }
@@ -212,11 +286,13 @@ function initAria2 () {
   ariaTools.setOnDownloadError((gid) => {
     console.log('error', gid);
     sendMessageReplyOriginal('Download error.');
+    clearInterval(statusInterval);
     downloadUtils.cleanupDownload();
   });
 }
 
 function driveUploadCompleteCallback (err, url, filePath, fileName) {
+  clearInterval(statusInterval);
   if (err) {
     var message;
     try {
@@ -229,4 +305,5 @@ function driveUploadCompleteCallback (err, url, filePath, fileName) {
   } else {
     sendMessageReplyOriginal('<a href=\'' + url + '\'>' + fileName + '</a>');
   }
+  downloadUtils.cleanupDownload();
 }

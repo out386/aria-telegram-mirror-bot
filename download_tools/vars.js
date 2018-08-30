@@ -7,5 +7,7 @@ module.exports = {
   tgUsername: undefined,
   tgFromId: undefined,
   tgChatId: undefined,
-  tgMessageId: undefined
+  tgMessageId: undefined,
+  tgStatusMessageId: undefined,
+  statusMsgsList: []
 };
