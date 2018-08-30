@@ -147,25 +147,26 @@ function generateStatusMessage (totalLength, completedLength, speed, files) {
   } else {
     progress = Math.round(completedLength * 100 / totalLength);
   }
-  var message = progress + '% of <code>' + fileName + '</code> downloaded at ' + formatSpeed(speed);
+  var message = formatSize(completedLength) + ' / ' + formatSize(totalLength) +
+    ' (' + progress + '%) of <i>' + fileName + '</i> downloaded at ' + formatSize(speed) + 'ps';
   return message;
 }
 
-function formatSpeed (speed) {
+function formatSize (size) {
   var suffix;
-  if (speed < 1024) {
-    suffix = 'Bps';
-  } else if (speed >= 1024 && speed < 1048576) {
-    speed = Math.round(speed / 1024);
-    suffix = 'kBps';
-  } else if (speed >= 1048576 && speed < 1073741824) {
-    speed = Math.round(speed / 1048576);
-    suffix = 'mBps';
-  } else if (speed >= 1073741824) {
-    speed = Math.round(speed / 1073741824);
-    suffix = 'wPps (Weed Particles Per Second)';
+  if (size < 1024) {
+    suffix = 'B';
+  } else if (size >= 1024 && size < 1048576) {
+    size = Math.round(size / 1024);
+    suffix = 'KB';
+  } else if (size >= 1048576 && size < 1073741824) {
+    size = Math.round(size / 1048576);
+    suffix = 'MB';
+  } else if (size >= 1073741824) {
+    size = Math.round(size / 1073741824);
+    suffix = 'GB';
   }
-  return speed + ' ' + suffix;
+  return size + ' ' + suffix;
 }
 
 function isDownloadAllowed (url) {
