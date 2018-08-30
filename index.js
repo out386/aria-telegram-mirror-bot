@@ -162,7 +162,7 @@ function download (msg, match, isTar) {
     });
 }
 
-function sendMessage (msg, text, delay, callback) {
+function sendMessage (msg, text, delay, callback, quickDeleteOriginal) {
   if (!delay) delay = 5000;
   bot.sendMessage(msg.chat.id, text, {
     reply_to_message_id: msg.message_id,
@@ -172,7 +172,11 @@ function sendMessage (msg, text, delay, callback) {
       if (callback) callback(res);
       if (delay > -1) {
         msgTools.deleteMsg(bot, res, delay);
-        msgTools.deleteMsg(bot, msg, delay);
+        if (quickDeleteOriginal) {
+          msgTools.deleteMsg(bot, msg);
+        } else {
+          msgTools.deleteMsg(bot, msg, delay);
+        }
       }
     })
     .catch((ignored) => {});
@@ -199,7 +203,7 @@ function sendStatusMessage (msg) {
     if (!err) {
       sendMessage(msg, text, 60000, message => {
         downloadUtils.addStatus(message);
-      });
+      }, true);
     }
   });
 }
