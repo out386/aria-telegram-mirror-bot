@@ -132,6 +132,7 @@ function cancelMirror (msg) {
           sendMessage(msg, 'The download was canceled.');
         }
         clearInterval(statusInterval);
+        statusInterval = null;
         downloadUtils.cleanupDownload();
       });
     }
@@ -153,6 +154,7 @@ function download (msg, match, isTar) {
       if (err) {
         console.log('Failure', err);
         sendMessageReplyOriginal('Failed to start the download. ' + err['message']);
+        statusInterval = null;
         downloadUtils.cleanupDownload();
       } else {
         console.log('download: ' + match + ' gid: ' + gid);
@@ -249,12 +251,16 @@ function initAria2 () {
     // downloadUtils.setDownloadVars makes sure the first element in the list refers
     // to the download command's message
     updateStatusMessage(dlVars.statusMsgsList[0], 'Download started.');
-    statusInterval = setInterval(updateAllStatus, 4000);
+
+    if (!statusInterval) {
+      statusInterval = setInterval(updateAllStatus, 4000);
+    }
   });
   ariaTools.setOnDownloadStop((gid) => {
     console.log('stop', gid);
     sendMessageReplyOriginal('Download stopped.');
     clearInterval(statusInterval);
+    statusInterval = null;
     downloadUtils.cleanupDownload();
   });
   ariaTools.setOnDownloadComplete((gid) => {
@@ -263,6 +269,7 @@ function initAria2 () {
         console.log('onDownloadComplete: ' + JSON.stringify(err, null, 2));
         sendMessageReplyOriginal('Upload failed. Could not get downloaded files.');
         clearInterval(statusInterval);
+        statusInterval = null;
         downloadUtils.cleanupDownload();
         return;
       }
@@ -272,6 +279,7 @@ function initAria2 () {
             console.log('onDownloadComplete: ' + JSON.stringify(err, null, 2));
             sendMessageReplyOriginal('Upload failed. Could not get file size.');
             clearInterval(statusInterval);
+            statusInterval = null;
             downloadUtils.cleanupDownload();
             return;
           }
@@ -287,12 +295,14 @@ function initAria2 () {
     console.log('error', gid);
     sendMessageReplyOriginal('Download error.');
     clearInterval(statusInterval);
+    statusInterval = null;
     downloadUtils.cleanupDownload();
   });
 }
 
 function driveUploadCompleteCallback (err, url, filePath, fileName) {
   clearInterval(statusInterval);
+  statusInterval = null;
   if (err) {
     var message;
     try {
