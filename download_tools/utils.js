@@ -153,20 +153,20 @@ function generateStatusMessage (totalLength, completedLength, speed, files) {
 }
 
 function formatSize (size) {
-  var suffix;
-  if (size < 1024) {
-    suffix = 'B';
-  } else if (size >= 1024 && size < 1048576) {
-    size = Math.round(size / 1024);
-    suffix = 'KB';
-  } else if (size >= 1048576 && size < 1073741824) {
-    size = Math.round(size / 1048576);
-    suffix = 'MB';
-  } else if (size >= 1073741824) {
-    size = Math.round(size / 1073741824);
-    suffix = 'GB';
+  if (size < 1000) {
+    return formatNumber(size) + 'B';
   }
-  return size + ' ' + suffix;
+  if (size < 1024000) {
+    return formatNumber(size / 1024) + 'KB';
+  }
+  if (size < 1048576000) {
+    return formatNumber(size / 1048576) + 'MB';
+  }
+  return formatNumber(size / 1073741824) + 'GB';
+}
+
+function formatNumber (n) {
+  return Math.round(n * 100) / 100;
 }
 
 function isDownloadAllowed (url) {
@@ -186,3 +186,4 @@ module.exports.isDownloadAllowed = isDownloadAllowed;
 module.exports.indexOfStatus = indexOfStatus;
 module.exports.addStatus = addStatus;
 module.exports.deleteStatus = deleteStatus;
+module.exports.formatSize = formatSize;
