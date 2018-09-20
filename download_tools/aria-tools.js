@@ -113,7 +113,7 @@ function getFileSize (gid, callback) {
 function uploadFile (filePath, fileSize, callback) {
   dlVars.isUploading = true;
   var fileName = downloadUtils.getFileNameFromPath(filePath);
-  var realFilePath = constants.AIRA_DOWNLOAD_LOCATION + '/' + fileName;
+  var realFilePath = constants.ARIA_DOWNLOAD_LOCATION + '/' + fileName;
   if (dlVars.isTar) {
     if (filePath === realFilePath) {
       // If there is only one file, do not archive
@@ -163,7 +163,7 @@ function stopDownload (gid, callback) {
 }
 
 function addUri (uri, callback) {
-  aria2.addUri(uri, {dir: constants.AIRA_DOWNLOAD_LOCATION})
+  aria2.addUri(uri, {dir: constants.ARIA_DOWNLOAD_LOCATION})
     .then((gid) => {
       callback(null, gid);
     })

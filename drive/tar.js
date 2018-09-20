@@ -3,7 +3,7 @@ const fs = require('fs');
 const constants = require('../.constants.js');
 
 function archive (srcName, destName, callback) {
-  var writeStream = fs.createWriteStream(constants.AIRA_DOWNLOAD_LOCATION + '/' + destName);
+  var writeStream = fs.createWriteStream(constants.ARIA_DOWNLOAD_LOCATION + '/' + destName);
   writeStream.on('close', () => callback(null));
   writeStream.on('error', (err) => callback(err));
 
@@ -11,7 +11,7 @@ function archive (srcName, destName, callback) {
     {
       maxReadSize: 163840,
       jobs: 1,
-      cwd: constants.AIRA_DOWNLOAD_LOCATION
+      cwd: constants.ARIA_DOWNLOAD_LOCATION
     },
     [srcName]
   );

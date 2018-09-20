@@ -8,9 +8,9 @@ const constants = require('../.constants.js');
  */
 function cleanupDownload () {
   console.log('cleanupDownload: deleting');
-  fs.remove(constants.AIRA_DOWNLOAD_LOCATION)
+  fs.remove(constants.ARIA_DOWNLOAD_LOCATION)
     .then(() => {
-      fs.mkdir(constants.AIRA_DOWNLOAD_LOCATION)
+      fs.mkdir(constants.ARIA_DOWNLOAD_LOCATION)
         .then(() => {
           resetVars();
         })
@@ -38,7 +38,7 @@ function resetVars () {
  * @returns {string} The name of the file or directory that was downloaded
  */
 function getFileNameFromPath (filePath) {
-  var baseDirLength = constants.AIRA_DOWNLOAD_LOCATION.length;
+  var baseDirLength = constants.ARIA_DOWNLOAD_LOCATION.length;
   var fileName = filePath.substring(baseDirLength + 1);
   var nameEndIndex = fileName.indexOf('/');
   if (nameEndIndex === -1) {
@@ -116,7 +116,7 @@ function deleteStatus (index) {
  */
 function findAriaFilePath (files) {
   var filePath = files[0]['path'];
-  if (filePath.startsWith(constants.AIRA_DOWNLOAD_LOCATION)) {
+  if (filePath.startsWith(constants.ARIA_DOWNLOAD_LOCATION)) {
     if (filePath.substring(filePath.lastIndexOf('.') + 1) !== 'torrent') {
       // This is not a torrent's metadata
       return filePath;

@@ -89,8 +89,8 @@ This is a description of the fields in .constants.js:
 
 * `TOKEN`: This is the Telegram bot token that you will get from Botfather in step 1 of Pre-installation.
 * `ARIA_SECRET`: This is the password used to connect to the aria2 RPC. You will get this from step 4 of Installation.
-* `AIRA_DOWNLOAD_LOCATION`: This is the directory that aria2 will download files into, before uploading them. Make sure that there is no trailing "/" in this path. The suggested path is `/path/to/aria-telegram-mirror-bot/downloads`
-* `ARIA_DOWNLOAD_LOCATION_ROOT`: This is the mountpoint that contains AIRA_DOWNLOAD_LOCATION. This is used internally to calculate the space available before downloading.
+* `ARIA_DOWNLOAD_LOCATION`: This is the directory that aria2 will download files into, before uploading them. Make sure that there is no trailing "/" in this path. The suggested path is `/path/to/aria-telegram-mirror-bot/downloads`
+* `ARIA_DOWNLOAD_LOCATION_ROOT`: This is the mountpoint that contains ARIA_DOWNLOAD_LOCATION. This is used internally to calculate the space available before downloading.
 * `ARIA_FILTERED_DOMAINS`: The bot will refuse to download files from these domains. Can be an empty list.
 * `GDRIVE_PARENT_DIR_ID`: This is the ID of the Google Drive folder that files will be uploaded into. You will get this from step 4 of Pre-installation.
 * `SUDO_USERS`: This is a list of Telegram user IDs. These users can use the bot in any chat. Can be an empty list, if AUTHORIZED_CHATS is not empty.

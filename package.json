@@ -13,6 +13,7 @@
     "diskspace": "^2.0.0",
     "fs-extra": "^6.0.1",
     "googleapis": "30.0.0",
+    "http-range-parse": "^1.0.0",
     "node-telegram-bot-api": "^0.30.0",
     "tar": "^4.4.4"
   }
