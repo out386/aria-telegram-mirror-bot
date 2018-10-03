@@ -34,11 +34,11 @@ function mirror (msg, match, isTar) {
         if (downloadUtils.isDownloadAllowed(match[1])) {
           prepDownload(msg, match[1], isTar);
         } else {
-          sendMessage(msg, 'You aren\'t allowed to download from that domain');
+          sendMessage(msg, `You aren't allowed to download from that domain`);
         }
       }
     } else {
-      sendMessage(msg, 'Websocket isn\'t open. Can\'t download');
+      sendMessage(msg, `Websocket isn't open. Can't download`);
     }
   } else {
     sendMessage(msg, 'You cannot use this bot here.');
@@ -123,9 +123,9 @@ function cancelMirror (msg) {
       sendMessage(msg, 'Upload in progress. Cannot cancel.');
     } else {
       ariaTools.stopDownload(dlVars.downloadGid, () => {
-      // Not sending a message here, because a cancel will fire
-      // the onDownloadStop notification, which will notify the
-      // person who started the download
+        // Not sending a message here, because a cancel will fire
+        // the onDownloadStop notification, which will notify the
+        // person who started the download
 
         if (dlVars.tgChatId !== msg.chat.id) {
           // Notify if this is not the chat the download started in
@@ -153,11 +153,11 @@ function download (msg, match, isTar) {
     (err, gid) => {
       if (err) {
         console.log('Failure', err);
-        sendMessageReplyOriginal('Failed to start the download. ' + err['message']);
+        sendMessageReplyOriginal(`Failed to start the download. ${err['message']}`);
         statusInterval = null;
         downloadUtils.cleanupDownload();
       } else {
-        console.log('download: ' + match + ' gid: ' + gid);
+        console.log(`download:${match} gid:${gid}`);
       }
     });
 }
@@ -179,7 +179,7 @@ function sendMessage (msg, text, delay, callback, quickDeleteOriginal) {
         }
       }
     })
-    .catch((ignored) => {});
+    .catch((ignored) => { });
 }
 
 function sendMessageReplyOriginal (message, callback) {
@@ -187,7 +187,7 @@ function sendMessageReplyOriginal (message, callback) {
     reply_to_message_id: dlVars.tgMessageId,
     parse_mode: 'HTML'
   })
-    .catch((ignored) => {});
+    .catch((ignored) => { });
 }
 
 function sendStatusMessage (msg) {
@@ -224,7 +224,7 @@ function editMessage (msg, text) {
     message_id: msg.message_id,
     parse_mode: 'HTML'
   })
-    .catch(ignored => {});
+    .catch(ignored => { });
 }
 
 function updateAllStatus () {
@@ -314,10 +314,10 @@ function driveUploadCompleteCallback (err, url, filePath, fileName) {
     } catch (ignored) {
       message = err;
     }
-    console.log('uploadFile: ' + filePath + ': ' + message);
-    sendMessageReplyOriginal('Failed to upload <code>' + fileName + '</code> to Drive.' + message);
+    console.log(`uploadFile: ${filePath}: ${message}`);
+    sendMessageReplyOriginal(`Failed to upload <code>${fileName}</code> to Drive.${message}`);
   } else {
-    sendMessageReplyOriginal('<a href=\'' + url + '\'>' + fileName + '</a>');
+    sendMessageReplyOriginal(`<a href='${url}'>fileName</a>`);
   }
   downloadUtils.cleanupDownload();
 }
