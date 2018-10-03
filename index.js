@@ -24,7 +24,7 @@ bot.onText(/^\/mirror (.+)/i, (msg, match) => {
   mirror(msg, match);
 });
 
-function mirror (msg, match, isTar) {
+function mirror(msg, match, isTar) {
   var authorizedCode = msgTools.isAuthorized(msg);
   if (authorizedCode > -1) {
     if (websocketOpened) {
@@ -34,11 +34,11 @@ function mirror (msg, match, isTar) {
         if (downloadUtils.isDownloadAllowed(match[1])) {
           prepDownload(msg, match[1], isTar);
         } else {
-          sendMessage(msg, 'You aren\'t allowed to download from that domain');
+          sendMessage(msg, `You aren't allowed to download from that domain`);
         }
       }
     } else {
-      sendMessage(msg, 'Websocket isn\'t open. Can\'t download');
+      sendMessage(msg, `Websocket isn't open. Can't download`);
     }
   } else {
     sendMessage(msg, 'You cannot use this bot here.');
@@ -49,7 +49,7 @@ bot.onText(/^\/mirrorStatus/i, (msg) => {
   sendStatusMessage(msg, undefined, 1);
 });
 
-function getStatus (msg, callback) {
+function getStatus(msg, callback) {
   var authorizedCode;
   if (msg) {
     authorizedCode = msgTools.isAuthorized(msg);
@@ -117,15 +117,15 @@ bot.onText(/^\/cancelMirror/i, (msg) => {
   }
 });
 
-function cancelMirror (msg) {
+function cancelMirror(msg) {
   if (dlVars.isDownloading) {
     if (dlVars.isUploading) {
       sendMessage(msg, 'Upload in progress. Cannot cancel.');
     } else {
       ariaTools.stopDownload(dlVars.downloadGid, () => {
-      // Not sending a message here, because a cancel will fire
-      // the onDownloadStop notification, which will notify the
-      // person who started the download
+        // Not sending a message here, because a cancel will fire
+        // the onDownloadStop notification, which will notify the
+        // person who started the download
 
         if (dlVars.tgChatId !== msg.chat.id) {
           // Notify if this is not the chat the download started in
@@ -141,28 +141,28 @@ function cancelMirror (msg) {
   }
 }
 
-function prepDownload (msg, match, isTar) {
+function prepDownload(msg, match, isTar) {
   sendMessage(msg, 'Preparing', -1, statusMessage => {
     downloadUtils.setDownloadVars(msg, statusMessage, isTar);
     download(msg, match, isTar);
   });
 }
 
-function download (msg, match, isTar) {
+function download(msg, match, isTar) {
   ariaTools.addUri([match],
     (err, gid) => {
       if (err) {
         console.log('Failure', err);
-        sendMessageReplyOriginal('Failed to start the download. ' + err['message']);
+        sendMessageReplyOriginal(`Failed to start the download. ${err['message']}`);
         statusInterval = null;
         downloadUtils.cleanupDownload();
       } else {
-        console.log('download: ' + match + ' gid: ' + gid);
+        console.log(`download: ${match} gid: ${gid}`);
       }
     });
 }
 
-function sendMessage (msg, text, delay, callback, quickDeleteOriginal) {
+function sendMessage(msg, text, delay, callback, quickDeleteOriginal) {
   if (!delay) delay = 5000;
   bot.sendMessage(msg.chat.id, text, {
     reply_to_message_id: msg.message_id,
@@ -179,18 +179,18 @@ function sendMessage (msg, text, delay, callback, quickDeleteOriginal) {
         }
       }
     })
-    .catch((ignored) => {});
+    .catch((ignored) => { });
 }
 
-function sendMessageReplyOriginal (message, callback) {
+function sendMessageReplyOriginal(message, callback) {
   bot.sendMessage(dlVars.tgChatId, message, {
     reply_to_message_id: dlVars.tgMessageId,
     parse_mode: 'HTML'
   })
-    .catch((ignored) => {});
+    .catch((ignored) => { });
 }
 
-function sendStatusMessage (msg) {
+function sendStatusMessage(msg) {
   // Skipping 0, which is the reply to the download command message
   var index = downloadUtils.indexOfStatus(msg.chat.id, 1);
 
@@ -208,7 +208,7 @@ function sendStatusMessage (msg) {
   });
 }
 
-function updateStatusMessage (msg, text) {
+function updateStatusMessage(msg, text) {
   if (!text) {
     getStatus(msg, (err, text) => {
       if (!err) editMessage(msg, text);
@@ -218,16 +218,16 @@ function updateStatusMessage (msg, text) {
   }
 }
 
-function editMessage (msg, text) {
+function editMessage(msg, text) {
   bot.editMessageText(text, {
     chat_id: msg.chat.id,
     message_id: msg.message_id,
     parse_mode: 'HTML'
   })
-    .catch(ignored => {});
+    .catch(ignored => { });
 }
 
-function updateAllStatus () {
+function updateAllStatus() {
   getStatus(null, (err, text) => {
     if (err) return;
     dlVars.statusMsgsList.forEach(status => {
@@ -236,7 +236,7 @@ function updateAllStatus () {
   });
 }
 
-function initAria2 () {
+function initAria2() {
   ariaTools.openWebsocket((err) => {
     if (err) {
       console.log('A2C: Failed to open websocket. Exiting.');
@@ -304,7 +304,7 @@ function initAria2 () {
   });
 }
 
-function driveUploadCompleteCallback (err, url, filePath, fileName) {
+function driveUploadCompleteCallback(err, url, filePath, fileName) {
   clearInterval(statusInterval);
   statusInterval = null;
   if (err) {
@@ -314,10 +314,10 @@ function driveUploadCompleteCallback (err, url, filePath, fileName) {
     } catch (ignored) {
       message = err;
     }
-    console.log('uploadFile: ' + filePath + ': ' + message);
-    sendMessageReplyOriginal('Failed to upload <code>' + fileName + '</code> to Drive.' + message);
+    console.log(`uploadFile: ${filePath}: ${message}`);
+    sendMessageReplyOriginal(`Failed to upload <code>${fileName}</code> to Drive.${message}`);
   } else {
-    sendMessageReplyOriginal('<a href=\'' + url + '\'>' + fileName + '</a>');
+    sendMessageReplyOriginal(`<a href='${url}'>fileName</a>`);
   }
   downloadUtils.cleanupDownload();
 }
