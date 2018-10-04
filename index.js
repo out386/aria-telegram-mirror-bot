@@ -157,7 +157,7 @@ function download(msg, match, isTar) {
         statusInterval = null;
         downloadUtils.cleanupDownload();
       } else {
-        console.log(`download: ${match} gid: ${gid}`);
+        console.log(`download:${match} gid:${gid}`);
       }
     });
 }
