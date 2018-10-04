@@ -24,7 +24,7 @@ bot.onText(/^\/mirror (.+)/i, (msg, match) => {
   mirror(msg, match);
 });
 
-function mirror(msg, match, isTar) {
+function mirror (msg, match, isTar) {
   var authorizedCode = msgTools.isAuthorized(msg);
   if (authorizedCode > -1) {
     if (websocketOpened) {
@@ -49,7 +49,7 @@ bot.onText(/^\/mirrorStatus/i, (msg) => {
   sendStatusMessage(msg, undefined, 1);
 });
 
-function getStatus(msg, callback) {
+function getStatus (msg, callback) {
   var authorizedCode;
   if (msg) {
     authorizedCode = msgTools.isAuthorized(msg);
@@ -117,7 +117,7 @@ bot.onText(/^\/cancelMirror/i, (msg) => {
   }
 });
 
-function cancelMirror(msg) {
+function cancelMirror (msg) {
   if (dlVars.isDownloading) {
     if (dlVars.isUploading) {
       sendMessage(msg, 'Upload in progress. Cannot cancel.');
@@ -141,14 +141,14 @@ function cancelMirror(msg) {
   }
 }
 
-function prepDownload(msg, match, isTar) {
+function prepDownload (msg, match, isTar) {
   sendMessage(msg, 'Preparing', -1, statusMessage => {
     downloadUtils.setDownloadVars(msg, statusMessage, isTar);
     download(msg, match, isTar);
   });
 }
 
-function download(msg, match, isTar) {
+function download (msg, match, isTar) {
   ariaTools.addUri([match],
     (err, gid) => {
       if (err) {
@@ -162,7 +162,7 @@ function download(msg, match, isTar) {
     });
 }
 
-function sendMessage(msg, text, delay, callback, quickDeleteOriginal) {
+function sendMessage (msg, text, delay, callback, quickDeleteOriginal) {
   if (!delay) delay = 5000;
   bot.sendMessage(msg.chat.id, text, {
     reply_to_message_id: msg.message_id,
@@ -182,7 +182,7 @@ function sendMessage(msg, text, delay, callback, quickDeleteOriginal) {
     .catch((ignored) => { });
 }
 
-function sendMessageReplyOriginal(message, callback) {
+function sendMessageReplyOriginal (message, callback) {
   bot.sendMessage(dlVars.tgChatId, message, {
     reply_to_message_id: dlVars.tgMessageId,
     parse_mode: 'HTML'
@@ -190,7 +190,7 @@ function sendMessageReplyOriginal(message, callback) {
     .catch((ignored) => { });
 }
 
-function sendStatusMessage(msg) {
+function sendStatusMessage (msg) {
   // Skipping 0, which is the reply to the download command message
   var index = downloadUtils.indexOfStatus(msg.chat.id, 1);
 
@@ -208,7 +208,7 @@ function sendStatusMessage(msg) {
   });
 }
 
-function updateStatusMessage(msg, text) {
+function updateStatusMessage (msg, text) {
   if (!text) {
     getStatus(msg, (err, text) => {
       if (!err) editMessage(msg, text);
@@ -218,7 +218,7 @@ function updateStatusMessage(msg, text) {
   }
 }
 
-function editMessage(msg, text) {
+function editMessage (msg, text) {
   bot.editMessageText(text, {
     chat_id: msg.chat.id,
     message_id: msg.message_id,
@@ -227,7 +227,7 @@ function editMessage(msg, text) {
     .catch(ignored => { });
 }
 
-function updateAllStatus() {
+function updateAllStatus () {
   getStatus(null, (err, text) => {
     if (err) return;
     dlVars.statusMsgsList.forEach(status => {
@@ -236,7 +236,7 @@ function updateAllStatus() {
   });
 }
 
-function initAria2() {
+function initAria2 () {
   ariaTools.openWebsocket((err) => {
     if (err) {
       console.log('A2C: Failed to open websocket. Exiting.');
@@ -304,7 +304,7 @@ function initAria2() {
   });
 }
 
-function driveUploadCompleteCallback(err, url, filePath, fileName) {
+function driveUploadCompleteCallback (err, url, filePath, fileName) {
   clearInterval(statusInterval);
   statusInterval = null;
   if (err) {
