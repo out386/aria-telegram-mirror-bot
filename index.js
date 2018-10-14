@@ -332,7 +332,7 @@ function driveUploadCompleteCallback (err, url, filePath, fileName) {
     console.log(`uploadFile: ${filePath}: ${message}`);
     finalMessage = `Failed to upload <code>${fileName}</code> to Drive.${message}`;
   } else {
-    finalMessage = `<a href='${url}'>fileName</a>`;
+    finalMessage = `<a href='${url}'>${fileName}</a>`;
   }
   sendMessageReplyOriginal(finalMessage);
   updateAllStatus(finalMessage);
