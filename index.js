@@ -227,13 +227,19 @@ function editMessage (msg, text) {
     .catch(ignored => { });
 }
 
-function updateAllStatus () {
-  getStatus(null, (err, text) => {
-    if (err) return;
+function updateAllStatus (message) {
+  if(message) {
     dlVars.statusMsgsList.forEach(status => {
-      editMessage(status, text);
+      editMessage(status, message);
     });
-  });
+  } else {
+    getStatus(null, (err, text) => {
+      if (err) return;
+      dlVars.statusMsgsList.forEach(status => {
+        editMessage(status, text);
+      });
+    });
+  }
 }
 
 function initAria2 () {
@@ -262,18 +268,22 @@ function initAria2 () {
   });
   ariaTools.setOnDownloadStop((gid) => {
     console.log('stop', gid);
-    sendMessageReplyOriginal('Download stopped.');
     clearInterval(statusInterval);
     statusInterval = null;
+    var message = 'Download stopped.';
+    sendMessageReplyOriginal(message);
+    updateAllStatus(message);
     downloadUtils.cleanupDownload();
   });
   ariaTools.setOnDownloadComplete((gid) => {
     ariaTools.getAriaFilePath(gid, (err, file) => {
       if (err) {
         console.log('onDownloadComplete: ' + JSON.stringify(err, null, 2));
-        sendMessageReplyOriginal('Upload failed. Could not get downloaded files.');
         clearInterval(statusInterval);
         statusInterval = null;
+        var message = 'Upload failed. Could not get downloaded files.';
+        sendMessageReplyOriginal(message);
+        updateAllStatus(message);
         downloadUtils.cleanupDownload();
         return;
       }
@@ -281,9 +291,11 @@ function initAria2 () {
         ariaTools.getFileSize(gid, (err, size) => {
           if (err) {
             console.log('onDownloadComplete: ' + JSON.stringify(err, null, 2));
-            sendMessageReplyOriginal('Upload failed. Could not get file size.');
             clearInterval(statusInterval);
             statusInterval = null;
+            var message = 'Upload failed. Could not get file size.';
+            sendMessageReplyOriginal(message);
+            updateAllStatus(message);
             downloadUtils.cleanupDownload();
             return;
           }
@@ -297,9 +309,11 @@ function initAria2 () {
   });
   ariaTools.setOnDownloadError((gid) => {
     console.log('error', gid);
-    sendMessageReplyOriginal('Download error.');
     clearInterval(statusInterval);
     statusInterval = null;
+    var message = 'Download error.';
+    sendMessageReplyOriginal(message);
+    updateAllStatus(message);
     downloadUtils.cleanupDownload();
   });
 }
@@ -307,6 +321,7 @@ function initAria2 () {
 function driveUploadCompleteCallback (err, url, filePath, fileName) {
   clearInterval(statusInterval);
   statusInterval = null;
+  var finalMessage;
   if (err) {
     var message;
     try {
@@ -315,9 +330,11 @@ function driveUploadCompleteCallback (err, url, filePath, fileName) {
       message = err;
     }
     console.log(`uploadFile: ${filePath}: ${message}`);
-    sendMessageReplyOriginal(`Failed to upload <code>${fileName}</code> to Drive.${message}`);
+    finalMessage = `Failed to upload <code>${fileName}</code> to Drive.${message}`;
   } else {
-    sendMessageReplyOriginal(`<a href='${url}'>fileName</a>`);
+    finalMessage = `<a href='${url}'>fileName</a>`;
   }
+  sendMessageReplyOriginal(finalMessage);
+  updateAllStatus(finalMessage);
   downloadUtils.cleanupDownload();
 }
