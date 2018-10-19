@@ -28,6 +28,7 @@ function resetVars () {
   dlVars.isDownloading = undefined;
   dlVars.isUploading = undefined;
   dlVars.statusMsgsList = [];
+  dlVars.messagesSinceStart = undefined;
 }
 
 /**

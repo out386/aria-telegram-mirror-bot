@@ -24,6 +24,18 @@ bot.onText(/^\/mirror (.+)/i, (msg, match) => {
   mirror(msg, match);
 });
 
+bot.on('message', (msg) => {
+  if (dlVars.isDownloading && msg.chat.id === dlVars.tgChatId) {
+    if (dlVars.messagesSinceStart) {
+      if (dlVars.messagesSinceStart < 10) {
+        dlVars.messagesSinceStart++;
+      }
+    } else {
+      dlVars.messagesSinceStart = 1;
+    }
+  }
+});
+
 function mirror (msg, match, isTar) {
   var authorizedCode = msgTools.isAuthorized(msg);
   if (authorizedCode > -1) {
@@ -228,7 +240,7 @@ function editMessage (msg, text) {
 }
 
 function updateAllStatus (message) {
-  if(message) {
+  if (message) {
     dlVars.statusMsgsList.forEach(status => {
       editMessage(status, message);
     });
@@ -239,6 +251,21 @@ function updateAllStatus (message) {
         editMessage(status, text);
       });
     });
+  }
+}
+
+/**
+ * Deletes the bot's original response to the download command, if less
+ * than 10 messages have been sent to the group the download started in,
+ * since the download was started. Also deletes if the bot doesn't have
+ * message read permissions.
+ **/
+function deleteOrigReply () {
+  /* Reason: The download task has been completed, and a new status message
+   * has been sent. No need to clutter the group with dulpicate status.
+   */
+  if (!dlVars.messagesSinceStart || dlVars.messagesSinceStart < 10) {
+    msgTools.deleteMsg(bot, dlVars.statusMsgsList[0], 0);
   }
 }
 
@@ -273,6 +300,7 @@ function initAria2 () {
     var message = 'Download stopped.';
     sendMessageReplyOriginal(message);
     updateAllStatus(message);
+    deleteOrigReply();
     downloadUtils.cleanupDownload();
   });
   ariaTools.setOnDownloadComplete((gid) => {
@@ -284,6 +312,7 @@ function initAria2 () {
         var message = 'Upload failed. Could not get downloaded files.';
         sendMessageReplyOriginal(message);
         updateAllStatus(message);
+        deleteOrigReply();
         downloadUtils.cleanupDownload();
         return;
       }
@@ -296,6 +325,7 @@ function initAria2 () {
             var message = 'Upload failed. Could not get file size.';
             sendMessageReplyOriginal(message);
             updateAllStatus(message);
+            deleteOrigReply();
             downloadUtils.cleanupDownload();
             return;
           }
@@ -314,6 +344,7 @@ function initAria2 () {
     var message = 'Download error.';
     sendMessageReplyOriginal(message);
     updateAllStatus(message);
+    deleteOrigReply();
     downloadUtils.cleanupDownload();
   });
 }
@@ -336,5 +367,6 @@ function driveUploadCompleteCallback (err, url, filePath, fileName) {
   }
   sendMessageReplyOriginal(finalMessage);
   updateAllStatus(finalMessage);
+  deleteOrigReply();
   downloadUtils.cleanupDownload();
 }
