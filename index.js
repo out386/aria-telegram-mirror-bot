@@ -74,8 +74,9 @@ function getStatus (msg, callback) {
       if (dlVars.isUploading) {
         callback(null, 'Upload in progress.');
       } else {
-        ariaTools.getStatus(dlVars.downloadGid, (err, message) => {
+        ariaTools.getStatus(dlVars.downloadGid, (err, message, filename) => {
           if (!err) {
+            handleDisallowedFilename(filename);
             callback(null, message);
           } else {
             console.log('status: ', err);
@@ -132,25 +133,55 @@ bot.onText(/^\/cancelMirror/i, (msg) => {
 function cancelMirror (msg) {
   if (dlVars.isDownloading) {
     if (dlVars.isUploading) {
-      sendMessage(msg, 'Upload in progress. Cannot cancel.');
+      if (msg) {
+        sendMessage(msg, 'Upload in progress. Cannot cancel.');
+      }
     } else {
       ariaTools.stopDownload(dlVars.downloadGid, () => {
         // Not sending a message here, because a cancel will fire
         // the onDownloadStop notification, which will notify the
         // person who started the download
 
-        if (dlVars.tgChatId !== msg.chat.id) {
+        if (msg && dlVars.tgChatId !== msg.chat.id) {
           // Notify if this is not the chat the download started in
           sendMessage(msg, 'The download was canceled.');
         }
+
+        // TODO: Why are these here? onDownloadStop handles these. Remove it.
         clearInterval(statusInterval);
         statusInterval = null;
         downloadUtils.cleanupDownload();
       });
     }
-  } else {
+  } else if (msg) {
     sendMessage(msg, 'No download in progress.');
   }
+}
+
+/**
+ * Cancels the download if its filename contains a string from
+ * constants.ARIA_FILTERED_FILENAMES. Call this on every status message update,
+ * because the file name might not become visible for the first few status updates.
+ *
+ * @param {String} filename The name of the downloaded file/top level directory
+ * @returns {boolean} False if file name is disallowed, true otherwise,
+ *                    or if undetermined
+ */
+function handleDisallowedFilename (filename) {
+  if (dlVars.isDownloadAllowed === 0) return false;
+  if (dlVars.isDownloadAllowed === 1) return true;
+
+  var isAllowed = downloadUtils.isFilenameAllowed(filename);
+  if (isAllowed === 0) {
+    dlVars.isDownloadAllowed = 0;
+    if (dlVars.isDownloading && !dlVars.isUploading) {
+      cancelMirror();
+    }
+    return false;
+  } else if (isAllowed === 1) {
+    dlVars.isDownloadAllowed = 1;
+  }
+  return true;
 }
 
 function prepDownload (msg, match, isTar) {
@@ -298,6 +329,9 @@ function initAria2 () {
     clearInterval(statusInterval);
     statusInterval = null;
     var message = 'Download stopped.';
+    if (dlVars.isDownloadAllowed === 0) {
+      message += ' Blacklisted file name.';
+    }
     sendMessageReplyOriginal(message);
     updateAllStatus(message);
     deleteOrigReply();
@@ -329,8 +363,19 @@ function initAria2 () {
             downloadUtils.cleanupDownload();
             return;
           }
-          console.log('onDownloadComplete: ' + file);
-          ariaTools.uploadFile(file, size, driveUploadCompleteCallback);
+
+          var filename = downloadUtils.getFileNameFromPath(file);
+          dlVars.isUploading = true;
+          if (handleDisallowedFilename(filename)) {
+            console.log('onDownloadComplete: ' + file);
+            ariaTools.uploadFile(file, size, driveUploadCompleteCallback);
+          } else {
+            var reason = 'Upload failed. Blacklisted file name.';
+            sendMessageReplyOriginal(reason);
+            updateAllStatus(reason);
+            deleteOrigReply();
+            downloadUtils.cleanupDownload();
+          }
         });
       } else {
         console.log('onDownloadComplete: No files');

@@ -29,6 +29,7 @@ function resetVars () {
   dlVars.isUploading = undefined;
   dlVars.statusMsgsList = [];
   dlVars.messagesSinceStart = undefined;
+  dlVars.isDownloadAllowed = undefined;
 }
 
 /**
@@ -133,7 +134,7 @@ function findAriaFilePath (files) {
  * @param {number} completedLength The downloaded length
  * @param {number} speed The speed of the download in B/s
  * @param {Object[]} files The list of files in the download
- * @returns {string} A printable status message
+ * @returns {Object} An object containing a printable status message and the file name
  */
 function generateStatusMessage (totalLength, completedLength, speed, files) {
   var fileName = findAriaFilePath(files);
@@ -150,7 +151,12 @@ function generateStatusMessage (totalLength, completedLength, speed, files) {
   }
   var message = formatSize(completedLength) + ' / ' + formatSize(totalLength) +
     ' (' + progress + '%) of <i>' + fileName + '</i> downloaded at ' + formatSize(speed) + 'ps';
-  return message;
+
+  var status = {
+    message: message,
+    filename: fileName
+  };
+  return status;
 }
 
 function formatSize (size) {
@@ -178,6 +184,16 @@ function isDownloadAllowed (url) {
   return true;
 }
 
+function isFilenameAllowed (filename) {
+  if (!constants.ARIA_FILTERED_FILENAMES) return 1;
+  if (filename === 'Metadata') return -1;
+
+  for (var i = 0; i < constants.ARIA_FILTERED_FILENAMES.length; i++) {
+    if (filename.indexOf(constants.ARIA_FILTERED_FILENAMES[i]) > -1) return 0;
+  }
+  return 1;
+}
+
 module.exports.cleanupDownload = cleanupDownload;
 module.exports.getFileNameFromPath = getFileNameFromPath;
 module.exports.setDownloadVars = setDownloadVars;
@@ -188,3 +204,4 @@ module.exports.indexOfStatus = indexOfStatus;
 module.exports.addStatus = addStatus;
 module.exports.deleteStatus = deleteStatus;
 module.exports.formatSize = formatSize;
+module.exports.isFilenameAllowed = isFilenameAllowed;

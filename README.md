@@ -1,10 +1,14 @@
 # aria-telegram-mirror-bot
 
-This is a Telegram bot that uses [aria2](https://github.com/aria2/aria2) to download files over BitTorrent / HTTP(S) and uploads them to your Google Drive. This can be useful for downloading from slow servers.
+This is a Telegram bot that uses [aria2](https://github.com/aria2/aria2) to download files over BitTorrent / HTTP(S) and uploads them to your Google Drive. This can be useful for downloading from slow servers. There are some features to try to reduce piracy.
 
 ### Limitations
 
 This bot is meant to be used in small, closed groups. So, once deployed, it only works in whitelisted groups. Also, it does not scale, so only one file can be downloaded at a time. This reduces the load on the server running the bot. Download queuing is planned, but not implemented yet.
+
+### Warning
+
+There is very little preventing users from using this to mirror pirated content. Hence, make sure that only trusted groups are whitelisted in `AUTHORIZED_CHATS`.
 
 ### Bot commands
 
@@ -92,6 +96,7 @@ This is a description of the fields in .constants.js:
 * `ARIA_DOWNLOAD_LOCATION`: This is the directory that aria2 will download files into, before uploading them. Make sure that there is no trailing "/" in this path. The suggested path is `/path/to/aria-telegram-mirror-bot/downloads`
 * `ARIA_DOWNLOAD_LOCATION_ROOT`: This is the mountpoint that contains ARIA_DOWNLOAD_LOCATION. This is used internally to calculate the space available before downloading.
 * `ARIA_FILTERED_DOMAINS`: The bot will refuse to download files from these domains. Can be an empty list.
+* `ARIA_FILTERED_FILENAMES`: The bot will refuse to completely download (or if already downloaded, then upload) files with any of these substrings in the file/top level directory name. Can be an empty list or left undefined.
 * `GDRIVE_PARENT_DIR_ID`: This is the ID of the Google Drive folder that files will be uploaded into. You will get this from step 4 of Pre-installation.
 * `SUDO_USERS`: This is a list of Telegram user IDs. These users can use the bot in any chat. Can be an empty list, if AUTHORIZED_CHATS is not empty.
 * `AUTHORIZED_CHATS`: This is a list of Telegram Chat IDs. Anyone in these chats can use the bot in that particular chat. Anyone not in one of these chats and not in SUDO_USERS cannot use the bot. Someone in one of the chats in this list can use the bot only in that chat, not elsewhere. Can be an empty list, if SUDO_USERS is not empty.

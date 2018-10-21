@@ -10,5 +10,6 @@ module.exports = {
   tgMessageId: undefined,
   tgStatusMessageId: undefined,
   statusMsgsList: [],
-  messagesSinceStart: undefined
+  messagesSinceStart: undefined,
+  isDownloadAllowed: undefined
 };

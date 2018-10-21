@@ -83,7 +83,7 @@ function getStatus (gid, callback) {
           parseFloat(res['completedLength']),
           parseFloat(res['downloadSpeed']),
           res['files']);
-        callback(null, statusMessage);
+        callback(null, statusMessage.message, statusMessage.filename);
       }
     });
 }
