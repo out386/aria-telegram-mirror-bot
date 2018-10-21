@@ -161,7 +161,8 @@ function cancelMirror (msg) {
 /**
  * Cancels the download if its filename contains a string from
  * constants.ARIA_FILTERED_FILENAMES. Call this on every status message update,
- * because the file name might not become visible for the first few status updates.
+ * because the file name might not become visible for the first few status
+ * updates, for example, in case of BitTorrents.
  *
  * @param {String} filename The name of the downloaded file/top level directory
  * @returns {boolean} False if file name is disallowed, true otherwise,
@@ -319,6 +320,12 @@ function initAria2 () {
     // downloadUtils.setDownloadVars makes sure the first element in the list refers
     // to the download command's message
     updateStatusMessage(dlVars.statusMsgsList[0], 'Download started.');
+
+    ariaTools.getStatus(dlVars.downloadGid, (err, message, filename) => {
+      if (!err) {
+        handleDisallowedFilename(filename);
+      }
+    });
 
     if (!statusInterval) {
       statusInterval = setInterval(updateAllStatus, 4000);
