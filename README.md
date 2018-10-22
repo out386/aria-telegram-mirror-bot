@@ -16,6 +16,7 @@ There is very little preventing users from using this to mirror pirated content.
 * `/mirrorTar <url>`: Same as `/mirror`, but archive multiple files into a tar before uploading it.
 * `/mirrorStatus`: Send a status message about the current download.
 * `/cancelMirror`: Cancel the current mirroring task. Only the person who started the task, SUDO_USERS, and chat admins can use this command.
+* `/list <filename>` : Send links to downloads with the `filename` substring in the name. In case of too many downloads, only show the most recent few. 
 
 ### Pre-installation
 
