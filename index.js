@@ -46,7 +46,7 @@ function mirror (msg, match, isTar) {
         if (downloadUtils.isDownloadAllowed(match[1])) {
           prepDownload(msg, match[1], isTar);
         } else {
-          sendMessage(msg, `You aren't allowed to download from that domain`);
+          sendMessage(msg, `Download failed. Blacklisted URL.`);
         }
       }
     } else {

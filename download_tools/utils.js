@@ -177,9 +177,8 @@ function formatNumber (n) {
 }
 
 function isDownloadAllowed (url) {
-  var domain = url.startsWith('http') ? url.split('/')[2] : url.split('/')[0];
   for (var i = 0; i < constants.ARIA_FILTERED_DOMAINS.length; i++) {
-    if (domain === constants.ARIA_FILTERED_DOMAINS[i]) return false;
+    if (url.indexOf(constants.ARIA_FILTERED_DOMAINS[i]) > -1) return false;
   }
   return true;
 }
