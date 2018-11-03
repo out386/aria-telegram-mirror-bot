@@ -263,12 +263,14 @@ function updateStatusMessage (msg, text) {
 }
 
 function editMessage (msg, text) {
-  bot.editMessageText(text, {
-    chat_id: msg.chat.id,
-    message_id: msg.message_id,
-    parse_mode: 'HTML'
-  })
-    .catch(ignored => { });
+  if (msg && msg.chat && msg.chat.id && msg.message_id) {
+    bot.editMessageText(text, {
+      chat_id: msg.chat.id,
+      message_id: msg.message_id,
+      parse_mode: 'HTML'
+    })
+      .catch(ignored => { });
+  }
 }
 
 function updateAllStatus (message) {
