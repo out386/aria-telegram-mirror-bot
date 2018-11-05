@@ -197,6 +197,7 @@ function cancelMirror (msg) {
 function handleDisallowedFilename (filename) {
   if (dlVars.isDownloadAllowed === 0) return false;
   if (dlVars.isDownloadAllowed === 1) return true;
+  if (!filename) return true;
 
   var isAllowed = downloadUtils.isFilenameAllowed(filename);
   if (isAllowed === 0) {

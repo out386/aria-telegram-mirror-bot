@@ -40,6 +40,8 @@ function resetVars () {
  * @returns {string} The name of the file or directory that was downloaded
  */
 function getFileNameFromPath (filePath) {
+  if (!filePath) return 'Metadata';
+
   var baseDirLength = constants.ARIA_DOWNLOAD_LOCATION.length;
   var fileName = filePath.substring(baseDirLength + 1);
   var nameEndIndex = fileName.indexOf('/');
@@ -47,6 +49,8 @@ function getFileNameFromPath (filePath) {
     nameEndIndex = fileName.length;
   }
   fileName = fileName.substring(0, nameEndIndex);
+
+  if (!fileName) return 'Metadata'; // This really shouldn't be possible
   return fileName;
 }
 
@@ -138,11 +142,7 @@ function findAriaFilePath (files) {
  */
 function generateStatusMessage (totalLength, completedLength, speed, files) {
   var fileName = findAriaFilePath(files);
-  if (fileName) {
-    fileName = getFileNameFromPath(fileName);
-  } else {
-    fileName = 'Metadata';
-  }
+  fileName = getFileNameFromPath(fileName);
   var progress;
   if (totalLength === 0) {
     progress = 0;
