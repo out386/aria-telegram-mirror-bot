@@ -16,12 +16,28 @@ var statusInterval;
 
 initAria2();
 
+bot.onText(/^\/start/, (msg) => {
+  if (msgTools.isAuthorized(msg) < 0) {
+    sendUnauthorizedMessage(msg);
+  } else {
+    sendMessage(msg, 'You should know the commands already. Happy mirroring.');
+  }
+});
+
 bot.onText(/^\/mirrortar (.+)/i, (msg, match) => {
-  mirror(msg, match, true);
+  if (msgTools.isAuthorized(msg) < 0) {
+    sendUnauthorizedMessage(msg);
+  } else {
+    mirror(msg, match, true);
+  }
 });
 
 bot.onText(/^\/mirror (.+)/i, (msg, match) => {
-  mirror(msg, match);
+  if (msgTools.isAuthorized(msg) < 0) {
+    sendUnauthorizedMessage(msg);
+  } else {
+    mirror(msg, match);
+  }
 });
 
 bot.on('message', (msg) => {
@@ -36,29 +52,36 @@ bot.on('message', (msg) => {
   }
 });
 
+/**
+ * Start a new download operation. Only one is allowed at a time. Make sure
+ * that this is triggered by an authorized user, because this function itself
+ * does not check for that.
+ * @param {Object} msg The Message that triggered the download
+ * @param {Array} match Message matches
+ * @param {boolean} isTar Decides if this download should be archived before upload
+ */
 function mirror (msg, match, isTar) {
-  var authorizedCode = msgTools.isAuthorized(msg);
-  if (authorizedCode > -1) {
-    if (websocketOpened) {
-      if (dlVars.isDownloading) {
-        sendMessage(msg, dlVars.tgUsername + ' is mirroring something. Please wait.');
-      } else {
-        if (downloadUtils.isDownloadAllowed(match[1])) {
-          prepDownload(msg, match[1], isTar);
-        } else {
-          sendMessage(msg, `Download failed. Blacklisted URL.`);
-        }
-      }
+  if (websocketOpened) {
+    if (dlVars.isDownloading) {
+      sendMessage(msg, dlVars.tgUsername + ' is mirroring something. Please wait.');
     } else {
-      sendMessage(msg, `Websocket isn't open. Can't download`);
+      if (downloadUtils.isDownloadAllowed(match[1])) {
+        prepDownload(msg, match[1], isTar);
+      } else {
+        sendMessage(msg, `Download failed. Blacklisted URL.`);
+      }
     }
   } else {
-    sendMessage(msg, 'You cannot use this bot here.');
+    sendMessage(msg, `Websocket isn't open. Can't download`);
   }
 }
 
 bot.onText(/^\/mirrorStatus/i, (msg) => {
-  sendStatusMessage(msg, undefined, 1);
+  if (msgTools.isAuthorized(msg) < 0) {
+    sendUnauthorizedMessage(msg);
+  } else {
+    sendStatusMessage(msg, undefined, 1);
+  }
 });
 
 function getStatus (msg, callback) {
@@ -88,13 +111,14 @@ function getStatus (msg, callback) {
       callback(null, 'No active downloads');
     }
   } else {
-    callback(null, 'You cannot use this bot here.');
+    callback(null, `You aren't authorized to use this bot here.`);
   }
 }
 
 bot.onText(/^\/list (.+)/i, (msg, match) => {
-  var authorizedCode = msgTools.isAuthorized(msg);
-  if (authorizedCode > -1) {
+  if (msgTools.isAuthorized(msg) < 0) {
+    sendUnauthorizedMessage(msg);
+  } else {
     driveList.listFiles(match[1], (err, res) => {
       if (err) {
         sendMessage(msg, 'Failed to fetch the list of files');
@@ -102,15 +126,17 @@ bot.onText(/^\/list (.+)/i, (msg, match) => {
         sendMessage(msg, res, 60000);
       }
     });
-  } else {
-    sendMessage(msg, 'You cannot use this bot here.');
   }
 });
 
 bot.onText(/^\/getFolder/i, (msg) => {
-  sendMessage(msg,
-    '<a href = \'' + driveUtils.getFileLink(constants.GDRIVE_PARENT_DIR_ID, true) + '\'>Drive mirror folder</a>',
-    60000);
+  if (msgTools.isAuthorized(msg) < 0) {
+    sendUnauthorizedMessage(msg);
+  } else {
+    sendMessage(msg,
+      '<a href = \'' + driveUtils.getFileLink(constants.GDRIVE_PARENT_DIR_ID, true) + '\'>Drive mirror folder</a>',
+      60000);
+  }
 });
 
 bot.onText(/^\/cancelMirror/i, (msg) => {
@@ -224,6 +250,10 @@ function sendMessage (msg, text, delay, callback, quickDeleteOriginal) {
       }
     })
     .catch((ignored) => { });
+}
+
+function sendUnauthorizedMessage (msg) {
+  sendMessage(msg, `You aren't authorized to use this bot here.`);
 }
 
 function sendMessageReplyOriginal (message) {
