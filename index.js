@@ -188,11 +188,11 @@ function handleDisallowedFilename (filename) {
 function prepDownload (msg, match, isTar) {
   sendMessage(msg, 'Preparing', -1, statusMessage => {
     downloadUtils.setDownloadVars(msg, statusMessage, isTar);
-    download(msg, match, isTar);
+    download(match);
   });
 }
 
-function download (msg, match, isTar) {
+function download (match) {
   ariaTools.addUri([match],
     (err, gid) => {
       if (err) {
@@ -226,7 +226,7 @@ function sendMessage (msg, text, delay, callback, quickDeleteOriginal) {
     .catch((ignored) => { });
 }
 
-function sendMessageReplyOriginal (message, callback) {
+function sendMessageReplyOriginal (message) {
   bot.sendMessage(dlVars.tgChatId, message, {
     reply_to_message_id: dlVars.tgMessageId,
     parse_mode: 'HTML'
