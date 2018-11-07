@@ -2,6 +2,8 @@ const fs = require('fs-extra');
 const dlVars = require('./vars.js');
 const constants = require('../.constants.js');
 
+const TYPE_METADATA = 'Metadata';
+
 /**
  * Deletes the download directory and remakes it.
  * Then unsets the 'isDownloading' and 'isUploading' flags.
@@ -30,6 +32,8 @@ function resetVars () {
   dlVars.statusMsgsList = [];
   dlVars.messagesSinceStart = undefined;
   dlVars.isDownloadAllowed = undefined;
+  dlVars.fileSize = undefined;
+  dlVars.filename = undefined;
 }
 
 /**
@@ -40,7 +44,7 @@ function resetVars () {
  * @returns {string} The name of the file or directory that was downloaded
  */
 function getFileNameFromPath (filePath) {
-  if (!filePath) return 'Metadata';
+  if (!filePath) return TYPE_METADATA;
 
   var baseDirLength = constants.ARIA_DOWNLOAD_LOCATION.length;
   var fileName = filePath.substring(baseDirLength + 1);
@@ -50,7 +54,7 @@ function getFileNameFromPath (filePath) {
   }
   fileName = fileName.substring(0, nameEndIndex);
 
-  if (!fileName) return 'Metadata'; // This really shouldn't be possible
+  if (!fileName) return TYPE_METADATA; // This really shouldn't be possible
   return fileName;
 }
 
@@ -149,12 +153,14 @@ function generateStatusMessage (totalLength, completedLength, speed, files) {
   } else {
     progress = Math.round(completedLength * 100 / totalLength);
   }
-  var message = formatSize(completedLength) + ' / ' + formatSize(totalLength) +
+  var totalLengthStr = formatSize(totalLength);
+  var message = formatSize(completedLength) + ' / ' + totalLengthStr +
     ' (' + progress + '%) of <i>' + fileName + '</i> downloaded at ' + formatSize(speed) + 'ps';
 
   var status = {
     message: message,
-    filename: fileName
+    filename: fileName,
+    filesize: totalLengthStr
   };
   return status;
 }
@@ -185,7 +191,7 @@ function isDownloadAllowed (url) {
 
 function isFilenameAllowed (filename) {
   if (!constants.ARIA_FILTERED_FILENAMES) return 1;
-  if (filename === 'Metadata') return -1;
+  if (filename === TYPE_METADATA) return -1;
 
   for (var i = 0; i < constants.ARIA_FILTERED_FILENAMES.length; i++) {
     if (filename.indexOf(constants.ARIA_FILTERED_FILENAMES[i]) > -1) return 0;

@@ -97,7 +97,7 @@ function getStatus (msg, callback) {
       if (dlVars.isUploading) {
         callback(null, 'Upload in progress.');
       } else {
-        ariaTools.getStatus(dlVars.downloadGid, (err, message, filename) => {
+        ariaTools.getStatus(dlVars.downloadGid, (err, message, filename, filesize) => {
           if (!err) {
             handleDisallowedFilename(filename);
             callback(null, message);
@@ -226,6 +226,7 @@ function download (match) {
         console.log('Failure', err);
         sendMessageReplyOriginal(`Failed to start the download. ${err['message']}`);
         statusInterval = null;
+        msgTools.notifyExternal(false, gid, dlVars.tgChatId);
         downloadUtils.cleanupDownload();
       } else {
         console.log(`download:${match} gid:${gid}`);
@@ -375,6 +376,7 @@ function initAria2 () {
     sendMessageReplyOriginal(message);
     updateAllStatus(message);
     deleteOrigReply();
+    msgTools.notifyExternal(false, gid, dlVars.tgChatId);
     downloadUtils.cleanupDownload();
   });
   ariaTools.setOnDownloadComplete((gid) => {
@@ -387,6 +389,7 @@ function initAria2 () {
         sendMessageReplyOriginal(message);
         updateAllStatus(message);
         deleteOrigReply();
+        msgTools.notifyExternal(false, gid, dlVars.tgChatId);
         downloadUtils.cleanupDownload();
         return;
       }
@@ -400,6 +403,7 @@ function initAria2 () {
             sendMessageReplyOriginal(message);
             updateAllStatus(message);
             deleteOrigReply();
+            msgTools.notifyExternal(false, gid, dlVars.tgChatId);
             downloadUtils.cleanupDownload();
             return;
           }
@@ -414,6 +418,7 @@ function initAria2 () {
             sendMessageReplyOriginal(reason);
             updateAllStatus(reason);
             deleteOrigReply();
+            msgTools.notifyExternal(false, gid, dlVars.tgChatId);
             downloadUtils.cleanupDownload();
           }
         });
@@ -430,6 +435,7 @@ function initAria2 () {
     sendMessageReplyOriginal(message);
     updateAllStatus(message);
     deleteOrigReply();
+    msgTools.notifyExternal(false, gid, dlVars.tgChatId);
     downloadUtils.cleanupDownload();
   });
 }
@@ -447,8 +453,10 @@ function driveUploadCompleteCallback (err, url, filePath, fileName) {
     }
     console.log(`uploadFile: ${filePath}: ${message}`);
     finalMessage = `Failed to upload <code>${fileName}</code> to Drive.${message}`;
+    msgTools.notifyExternal(false, dlVars.downloadGid, dlVars.tgChatId);
   } else {
     finalMessage = `<a href='${url}'>${fileName}</a>`;
+    msgTools.notifyExternal(true, dlVars.downloadGid, url, dlVars.tgChatId);
   }
   sendMessageReplyOriginal(finalMessage);
   updateAllStatus(finalMessage);

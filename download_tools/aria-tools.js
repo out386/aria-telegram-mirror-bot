@@ -66,25 +66,30 @@ function getAriaFilePath (gid, callback) {
 
 /**
  * Get a human-readable message about the status of the given download. Uses
- * HTML markup.
+ * HTML markup. Filename and filesize is always present if the download exists,
+ * message is only present if the download is active.
  * @param {string} gid The Aria2 GID of the download
- * @param {function} callback The function to call with an error or the status message
+ * @param {function} callback The function to call on completion. (err, message, filename, filesize).
  */
 function getStatus (gid, callback) {
   aria2.tellStatus(gid,
     ['status', 'totalLength', 'completedLength', 'downloadSpeed', 'files'],
     (err, res) => {
+      var isActive;
       if (err) {
         callback(err);
-      } else if (res['status'] !== 'active') {
-        callback(null, 'No active downloads.');
-      } else {
-        var statusMessage = downloadUtils.generateStatusMessage(parseFloat(res['totalLength']),
-          parseFloat(res['completedLength']),
-          parseFloat(res['downloadSpeed']),
-          res['files']);
-        callback(null, statusMessage.message, statusMessage.filename);
+        console.log('ERROR:', err);
+      } else if (res['status'] === 'active') {
+        isActive = true;
       }
+      var statusMessage = downloadUtils.generateStatusMessage(parseFloat(res['totalLength']),
+        parseFloat(res['completedLength']),
+        parseFloat(res['downloadSpeed']),
+        res['files']);
+      if (!isActive) {
+        statusMessage.message = 'No active downloads.';
+      }
+      callback(null, statusMessage.message, statusMessage.filename, statusMessage.filesize);
     });
 }
 

@@ -101,6 +101,11 @@ This is a description of the fields in .constants.js:
 * `GDRIVE_PARENT_DIR_ID`: This is the ID of the Google Drive folder that files will be uploaded into. You will get this from step 4 of Pre-installation.
 * `SUDO_USERS`: This is a list of Telegram user IDs. These users can use the bot in any chat. Can be an empty list, if AUTHORIZED_CHATS is not empty.
 * `AUTHORIZED_CHATS`: This is a list of Telegram Chat IDs. Anyone in these chats can use the bot in that particular chat. Anyone not in one of these chats and not in SUDO_USERS cannot use the bot. Someone in one of the chats in this list can use the bot only in that chat, not elsewhere. Can be an empty list, if SUDO_USERS is not empty.
+* `DOWNLOAD_NOTIFY_TARGET`: The fields here are used to notify an external web server once a download is complete. See the [section below](#Notifying-an-external-webserver-on-download-completion) for details.
+   * `enabled`: Set this to `true` to enable this feature.
+   * `host`: The address of the web server to notify.
+   * `port`: The server port ¯\\\_(ツ)\_/¯
+   * `path`: The server path ¯\\\_(ツ)\_/¯
 
 ### Starting after installation
 
@@ -109,6 +114,33 @@ After the initial installation, use these instructions to (re)start the bot.
 1. Start aria2 by running `./aria.sh`
 2. Start a new tmux session with `tmux new -s tgbot`, or connect to an existing session with `tmux a -t tgbot`. Running the bot inside tmux will let you disconnect from the server without terminating the bot. You can also use nohup instead.
 3. Start the bot with `npm --max_old_space_size=128 start`
+
+### Notifying an external webserver on download completion
+
+This bot can make an HTTP request to an external web server once a download is complete. This can be when a download fails to start, fails to download, is cancelled, or completes successfully. See the section [on constants](#Constants-description) for details on how to configure it.
+
+Your web server should listen for a POST request containing the following JSON data:
+
+```
+{
+    'successful': Boolean,
+    'file': {
+        'name': String,
+        'driveURL': String,
+        'size': String
+    },
+    originGroup: Number
+}
+```
+
+* `successful`: `true` if the download completed successfully, `false` otherwise
+* `file`: Details about the file.
+   * `name`: The name of the file. Might or might not be present if `successful` is `false`.
+   * `driveURL`: The Google Drive download link to the downloaded file. Might or might not be present if `successful` is `false`.
+   * `size`: A human-readable file size. Might or might not be present if `successful` is `false`.
+* `originGroup`:  The Telegram chat ID for the chat the download was started in
+
+If `successful` is false, any or all of the fields of `file` might be absent. However, if present, they are correct/reliable.
 
 ### License
 The MIT License (MIT)
