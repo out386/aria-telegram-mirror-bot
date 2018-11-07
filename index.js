@@ -172,11 +172,6 @@ function cancelMirror (msg) {
           // Notify if this is not the chat the download started in
           sendMessage(msg, 'The download was canceled.');
         }
-
-        // TODO: Why are these here? onDownloadStop handles these. Remove it.
-        clearInterval(statusInterval);
-        statusInterval = null;
-        downloadUtils.cleanupDownload();
       });
     }
   } else if (msg) {
