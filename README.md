@@ -22,13 +22,15 @@ There is very little preventing users from using this to mirror pirated content.
 
 1. [Create a new bot](https://core.telegram.org/bots#3-how-do-i-create-a-bot) using Telegram's BotFather and copy your TOKEN.
 
-2. Add the bot to your groups and give it the permission to delete messages. This permission is used to clean up status request messages from users.
+2. Optionally, also change the `setprivacy` attribute to `disabled` from BotFather. This allows the bot to be more cleaner about how it deletes status messages.
 
-3. Install [aria2](https://github.com/aria2/aria2).
+3. Add the bot to your groups and optionally, give it the permission to delete messages. This permission is used to clean up status request messages from users. Not granting it will quickly fill the chat with useless messages from users.
+
+4. Install [aria2](https://github.com/aria2/aria2).
    * For Ubuntu:
      `sudo apt install aria2`
 
-4. Get Drive folder ID:
+5. Get Drive folder ID:
 
    * Visit [Google Drive](https://drive.google.com).
    * Create a new folder. The bot will upload files inside this folder.
