@@ -157,7 +157,7 @@ function generateStatusMessage (totalLength, completedLength, speed, files) {
   const finished = '\u2588';
   const remaining = '\u2592';
   var progressString = '';
-  for (var i = 0; i < 10; i++) {
+  for (var i = 1; i <= 10; i++) {
     if (i <= Math.floor(progress/10))
       progressString += finished;
     else
