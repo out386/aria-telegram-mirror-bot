@@ -154,7 +154,7 @@ function generateStatusMessage (totalLength, completedLength, speed, files) {
     progress = Math.round(completedLength * 100 / totalLength);
   }
   var totalLengthStr = formatSize(totalLength);
-  var message = 'Downloading : ' + fileName + '\nProgress : Downloaded ' + formatSize(completedLength) + ' / ' + totalLengthStr + ' - ' + progress + '%' + ' at ' + formatSize(speed) + 'ps';
+  var message = 'Filename: ' + fileName + '\nProgress: Downloaded ' + formatSize(completedLength) + ' / ' + totalLengthStr + ' - ' + progress + '%' + ' at ' + formatSize(speed) + 'ps';
 
   var status = {
     message: message,
