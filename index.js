@@ -419,6 +419,12 @@ function initAria2 () {
         });
       } else {
         console.log('onDownloadComplete: No files');
+        var reason = 'Upload failed. Could not get files.';
+        sendMessageReplyOriginal(reason);
+        updateAllStatus(reason);
+        deleteOrigReply();
+        msgTools.notifyExternal(false, gid, dlVars.tgChatId);
+        downloadUtils.cleanupDownload();
       }
     });
   });
