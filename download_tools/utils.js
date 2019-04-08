@@ -163,7 +163,7 @@ function generateStatusMessage (totalLength, completedLength, speed, files) {
     else
       progressString += remaining;
   }
-  var message = 'Filename: ' + fileName + '\nProgress: ' + progressString + ' ' + progress + '%' + ' at ' + formatSize(speed) + 'ps';
+  var message = 'Filename: ' + fileName + '\nProgress: ' + progressString + ' ' + progress + '%' + ' of ' + totalLengthStr + ' at ' + formatSize(speed) + 'ps';
 
   var status = {
     message: message,
