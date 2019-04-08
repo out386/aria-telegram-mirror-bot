@@ -79,6 +79,7 @@ function getStatus (gid, callback) {
       if (err) {
         callback(err);
         console.log('ERROR:', err);
+        return;
       } else if (res['status'] === 'active') {
         isActive = true;
       }
