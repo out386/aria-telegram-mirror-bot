@@ -106,8 +106,8 @@ This is a description of the fields in .constants.js:
 * `DOWNLOAD_NOTIFY_TARGET`: The fields here are used to notify an external web server once a download is complete. See the [section below](#Notifying-an-external-webserver-on-download-completion) for details.
    * `enabled`: Set this to `true` to enable this feature.
    * `host`: The address of the web server to notify.
-   * `port`: The server port ¯\\\_(ツ)\_/¯
-   * `path`: The server path ¯\\\_(ツ)\_/¯
+   * `port`: The server port
+   * `path`: The server path
 
 ### Starting after installation
 
