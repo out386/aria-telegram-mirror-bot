@@ -330,6 +330,16 @@ function deleteOrigReply () {
   }
 }
 
+function cleanupDownload (gid, message) {
+  clearInterval(statusInterval);
+  statusInterval = null;
+  sendMessageReplyOriginal(message);
+  updateAllStatus(message);
+  deleteOrigReply();
+  msgTools.notifyExternal(false, gid, dlVars.tgChatId);
+  downloadUtils.cleanupDownload();
+}
+
 function initAria2 () {
   ariaTools.openWebsocket((err) => {
     if (err) {
@@ -378,28 +388,17 @@ function initAria2 () {
     ariaTools.getAriaFilePath(gid, (err, file) => {
       if (err) {
         console.log('onDownloadComplete: ' + JSON.stringify(err, null, 2));
-        clearInterval(statusInterval);
-        statusInterval = null;
         var message = 'Upload failed. Could not get downloaded files.';
-        sendMessageReplyOriginal(message);
-        updateAllStatus(message);
-        deleteOrigReply();
-        msgTools.notifyExternal(false, gid, dlVars.tgChatId);
-        downloadUtils.cleanupDownload();
+        cleanupDownload(gid, message);
         return;
       }
+
       if (file) {
         ariaTools.getFileSize(gid, (err, size) => {
           if (err) {
             console.log('onDownloadComplete: ' + JSON.stringify(err, null, 2));
-            clearInterval(statusInterval);
-            statusInterval = null;
             var message = 'Upload failed. Could not get file size.';
-            sendMessageReplyOriginal(message);
-            updateAllStatus(message);
-            deleteOrigReply();
-            msgTools.notifyExternal(false, gid, dlVars.tgChatId);
-            downloadUtils.cleanupDownload();
+            cleanupDownload(gid, message);
             return;
           }
 
@@ -410,21 +409,26 @@ function initAria2 () {
             ariaTools.uploadFile(file, size, driveUploadCompleteCallback);
           } else {
             var reason = 'Upload failed. Blacklisted file name.';
-            sendMessageReplyOriginal(reason);
-            updateAllStatus(reason);
-            deleteOrigReply();
-            msgTools.notifyExternal(false, gid, dlVars.tgChatId);
-            downloadUtils.cleanupDownload();
+            cleanupDownload(gid, reason);
           }
         });
       } else {
-        console.log('onDownloadComplete: No files');
-        var reason = 'Upload failed. Could not get files.';
-        sendMessageReplyOriginal(reason);
-        updateAllStatus(reason);
-        deleteOrigReply();
-        msgTools.notifyExternal(false, gid, dlVars.tgChatId);
-        downloadUtils.cleanupDownload();
+        ariaTools.isDownloadMetadata(gid, (err, isMetadata) => {
+          if (err) {
+            console.log('onDownloadComplete: isMetadata: ' + JSON.stringify(err, null, 2));
+            var message = 'Upload failed. Could not check if the file is metadata.';
+            cleanupDownload(gid, message);
+            return;
+          }
+
+          if (isMetadata) {
+            console.log('onDownloadComplete: No files');
+          } else {
+            console.log('onDownloadComplete: No files - not metadata.');
+            var reason = 'Upload failed. Could not get files.';
+            cleanupDownload(gid, reason);
+          }
+        });
       }
     });
   });

@@ -94,6 +94,21 @@ function getStatus (gid, callback) {
     });
 }
 
+function isDownloadMetadata (gid, callback) {
+  aria2.tellStatus(gid, ['followedBy'], (err, res) => {
+    if (err) {
+      callback(err);
+      console.log('ERROR:', err);
+    } else {
+      if (res['followedBy']) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    }
+  });
+}
+
 function getFileSize (gid, callback) {
   aria2.tellStatus(gid,
     ['totalLength'],
@@ -189,3 +204,4 @@ module.exports.addUri = addUri;
 module.exports.getStatus = getStatus;
 module.exports.stopDownload = stopDownload;
 module.exports.getFileSize = getFileSize;
+module.exports.isDownloadMetadata = isDownloadMetadata;
