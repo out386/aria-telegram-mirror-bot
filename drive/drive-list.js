@@ -2,6 +2,7 @@ const constants = require('../.constants.js');
 const driveAuth = require('./drive-auth.js');
 const {google} = require('googleapis');
 const utils = require('./drive-utils.js');
+const dlUtils = require('../download_tools/utils.js');
 
 /**
  * Searches for a given file on Google Drive. Only search the subfolders and files
@@ -22,7 +23,7 @@ function listFiles (fileName, callback) {
     const drive = google.drive({version: 'v3', auth});
 
     drive.files.list({
-      fields: 'files(id, name, mimeType)',
+      fields: 'files(id, name, mimeType, size)',
       q: generateSearchQuery(fileName, constants.GDRIVE_PARENT_DIR_ID),
       orderBy: 'modifiedTime desc',
       pageSize: 20
@@ -79,7 +80,14 @@ function generateFilesListMessage (files) {
   var message = '';
   if (files.length > 0) {
     for (var i = 0; i < files.length; i++) {
-      message += '<a href = \'' + files[i]['url'] + '\'>' + files[i]['name'] + '</a>\n\n';
+      message += '<a href = \'' + files[i]['url'] + '\'>' + files[i]['name'] + '</a>';
+      if (files[i]['size'])
+        message += ' (' + dlUtils.formatSize(files[i]['size']) + ')\n';
+      else if (files[i]['mimeType'] === 'application/vnd.google-apps.folder')
+        message += ' (folder)\n';
+      else
+      message += '\n';
+
     }
   } else {
     message = 'There are no files matching your parameters';
