@@ -138,42 +138,42 @@ function uploadFile (filePath, fileSize, callback) {
   if (dlVars.isTar) {
     if (filePath === realFilePath) {
       // If there is only one file, do not archive
-      driveUploadFile(realFilePath, fileName, callback);
+      driveUploadFile(realFilePath, fileName, callback, fileSize);
     } else {
       diskspace.check(constants.ARIA_DOWNLOAD_LOCATION_ROOT, (err, res) => {
         if (err) {
           console.log('uploadFile: diskspace: ' + err);
           // Could not archive, so upload normally
-          driveUploadFile(realFilePath, fileName, callback);
+          driveUploadFile(realFilePath, fileName, callback, fileSize);
           return;
         }
         if (res['free'] > fileSize) {
           console.log('Starting archival');
           var destName = fileName + '.tar';
-          tar.archive(fileName, destName, (err) => {
+          tar.archive(fileName, destName, (err, size) => {
             if (err) callback(err);
             else {
               console.log('Archive complete');
-              driveUploadFile(realFilePath + '.tar', destName, callback);
+              driveUploadFile(realFilePath + '.tar', destName, callback, size);
             }
           });
         } else {
           console.log('uploadFile: Not enough space, uploading without archiving');
-          driveUploadFile(realFilePath, fileName, callback);
+          driveUploadFile(realFilePath, fileName, callback, fileSize);
         }
       });
     }
   } else {
-    driveUploadFile(realFilePath, fileName, callback);
+    driveUploadFile(realFilePath, fileName, callback, fileSize);
   }
 }
 
-function driveUploadFile (filePath, fileName, callback) {
+function driveUploadFile (filePath, fileName, callback, fileSize) {
   drive.uploadRecursive(filePath,
     constants.GDRIVE_PARENT_DIR_ID,
     (err, url) => {
       console.log('uploadFile: deleting');
-      callback(err, url, filePath, fileName);
+      callback(err, url, filePath, fileName, fileSize);
     });
 }
 

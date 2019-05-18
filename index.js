@@ -445,7 +445,7 @@ function initAria2 () {
   });
 }
 
-function driveUploadCompleteCallback (err, url, filePath, fileName) {
+function driveUploadCompleteCallback (err, url, filePath, fileName, fileSize) {
   clearInterval(statusInterval);
   statusInterval = null;
   var finalMessage;
@@ -460,7 +460,12 @@ function driveUploadCompleteCallback (err, url, filePath, fileName) {
     finalMessage = `Failed to upload <code>${fileName}</code> to Drive.${message}`;
     msgTools.notifyExternal(false, dlVars.downloadGid, dlVars.tgChatId);
   } else {
-    finalMessage = `<a href='${url}'>${fileName}</a>`;
+    if (fileSize) {
+      fileSizeStr = downloadUtils.formatSize(fileSize);
+      finalMessage = `<a href='${url}'>${fileName}</a> (${fileSizeStr})`;
+    } else {
+      finalMessage = `<a href='${url}'>${fileName}</a>`;
+    }
     msgTools.notifyExternal(true, dlVars.downloadGid, url, dlVars.tgChatId);
   }
   sendMessageReplyOriginal(finalMessage);

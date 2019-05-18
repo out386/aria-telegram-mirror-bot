@@ -4,8 +4,9 @@ const constants = require('../.constants.js');
 
 function archive (srcName, destName, callback) {
   var writeStream = fs.createWriteStream(constants.ARIA_DOWNLOAD_LOCATION + '/' + destName);
-  writeStream.on('close', () => callback(null));
-  writeStream.on('error', (err) => callback(err));
+  var size = 0;
+  writeStream.on('close', () => callback(null, size));
+  writeStream.on('error', (err) => callback(err, size));
 
   var stream = tar.c(
     {
@@ -16,7 +17,10 @@ function archive (srcName, destName, callback) {
     [srcName]
   );
 
-  stream.on('error', (err) => callback(err));
+  stream.on('error', (err) => callback(err, size));
+  stream.on('data', (chunk) => {
+    size += chunk.length;
+  });
 
   stream.pipe(writeStream);
 }
