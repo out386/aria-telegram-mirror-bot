@@ -4,3 +4,4 @@ node_modules/
 downloads/
 client_secret.json
 credentials.json
+npm-debug.log
