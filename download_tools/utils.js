@@ -3,6 +3,8 @@ const dlVars = require('./vars.js');
 const constants = require('../.constants.js');
 
 const TYPE_METADATA = 'Metadata';
+const PROGRESS_MAX_SIZE = Math.floor(100 / 8);
+const PROGRESS_INCOMPLETE = ['▏', '▎', '▍', '▌', '▋', '▊', '▉'];
 
 /**
  * Deletes the download directory and remakes it.
@@ -154,23 +156,31 @@ function generateStatusMessage (totalLength, completedLength, speed, files) {
     progress = Math.round(completedLength * 100 / totalLength);
   }
   var totalLengthStr = formatSize(totalLength);
-  const finished = '\u2588';
-  const remaining = '\u2592';
-  var progressString = '';
-  for (var i = 1; i <= 10; i++) {
-    if (i <= Math.floor(progress/10))
-      progressString += finished;
-    else
-      progressString += remaining;
-  }
-  var message = 'Filename: ' + fileName + '\nProgress: ' + progressString + ' ' + progress + '%' + ' of ' + totalLengthStr + ' at ' + formatSize(speed) + 'ps';
-
+  var progressString = generateProgress(progress);
+  var speedStr = formatSize(speed);
+  var message = `Filename: <i>${fileName}</i>\nProgress: <code>${progressString}</code>` +
+      ` of ${totalLengthStr} at ${speedStr}ps`;
   var status = {
     message: message,
     filename: fileName,
     filesize: totalLengthStr
   };
   return status;
+}
+
+function generateProgress (p) {
+  p = Math.min(Math.max(p, 0), 100);
+  var str = '[';
+  var cFull = Math.floor(p / 8);
+  var cPart = p % 8 - 1;
+  str += '█'.repeat(cFull);
+  if (cPart >= 0) {
+    str += PROGRESS_INCOMPLETE[cPart];
+  }
+  str += ' '.repeat(PROGRESS_MAX_SIZE - cFull);
+  str = `${str}] ${p}%`;
+
+  return str;
 }
 
 function formatSize (size) {

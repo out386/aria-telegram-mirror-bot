@@ -461,7 +461,7 @@ function driveUploadCompleteCallback (err, url, filePath, fileName, fileSize) {
     msgTools.notifyExternal(false, dlVars.downloadGid, dlVars.tgChatId);
   } else {
     if (fileSize) {
-      fileSizeStr = downloadUtils.formatSize(fileSize);
+      var fileSizeStr = downloadUtils.formatSize(fileSize);
       finalMessage = `<a href='${url}'>${fileName}</a> (${fileSizeStr})`;
     } else {
       finalMessage = `<a href='${url}'>${fileName}</a>`;
