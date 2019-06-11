@@ -1,19 +1,24 @@
-const fs = require('fs');
-const readline = require('readline');
-const {google} = require('googleapis');
+import fs = require('fs');
+import readline = require('readline');
+import { google } from 'googleapis';
+import { OAuth2Client } from 'google-auth-library';
 
 const SCOPE = 'https://www.googleapis.com/auth/drive';
-const TOKEN_PATH = 'credentials.json';
+const TOKEN_PATH = './credentials.json';
 
 /**
  * Authorize a client with credentials, then call the Google Drive API.
  * @param {function} callback The callback to call with the authorized client.
  */
-function call (callback) {
+export function call(callback: (err: string, client: OAuth2Client) => void) {
   // Load client secrets from a local file.
-  fs.readFile('client_secret.json', (err, content) => {
-    if (err) return console.log('Error loading client secret file:', err);
-    authorize(JSON.parse(content), callback);
+  fs.readFile('./client_secret.json', 'utf8', (err, content) => {
+    if (err) {
+      console.log('Error loading client secret file:', err.message);
+      callback(err.message, null);
+    } else {
+      authorize(JSON.parse(content), callback);
+    }
   });
 }
 
@@ -23,7 +28,7 @@ function call (callback) {
  * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
-function authorize (credentials, callback) {
+function authorize(credentials: any, callback: (err: string, client: OAuth2Client) => void) {
   const clientSecret = credentials.installed.client_secret;
   const clientId = credentials.installed.client_id;
   const redirectUris = credentials.installed.redirect_uris;
@@ -31,7 +36,7 @@ function authorize (credentials, callback) {
     clientId, clientSecret, redirectUris[0]);
 
   // Check if we have previously stored a token.
-  fs.readFile(TOKEN_PATH, (err, token) => {
+  fs.readFile(TOKEN_PATH, 'utf8', (err, token) => {
     if (err) return getAccessToken(oAuth2Client, callback);
     oAuth2Client.setCredentials(JSON.parse(token));
     callback(null, oAuth2Client);
@@ -44,7 +49,7 @@ function authorize (credentials, callback) {
  * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
  * @param {getEventsCallback} callback The callback for the authorized client.
  */
-function getAccessToken (oAuth2Client, callback) {
+function getAccessToken(oAuth2Client: OAuth2Client, callback: (err: string, client: OAuth2Client) => void) {
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: SCOPE
@@ -57,7 +62,7 @@ function getAccessToken (oAuth2Client, callback) {
   rl.question('Enter the code from that page here: ', (code) => {
     rl.close();
     oAuth2Client.getToken(code, (err, token) => {
-      if (err) return callback(err);
+      if (err) return callback(err.message, null);
       oAuth2Client.setCredentials(token);
       // Store the token to disk for later program executions
       fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
@@ -68,5 +73,3 @@ function getAccessToken (oAuth2Client, callback) {
     });
   });
 }
-
-module.exports.call = call;

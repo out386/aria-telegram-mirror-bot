@@ -1,31 +1,32 @@
-const dlVars = require('./download_tools/vars.js');
-const constants = require('./.constants.js');
-const http = require('http');
-const ariaTools = require('./download_tools/aria-tools.js');
+import dlVars = require('./download_tools/vars');
+import constants = require('./.constants');
+import http = require('http');
+import ariaTools = require('./download_tools/aria-tools');
+import TelegramBot = require('node-telegram-bot-api');
 
-async function deleteMsg (bot, msg, delay) {
+export async function deleteMsg (bot:TelegramBot, msg:TelegramBot.Message | dlVars.Message, delay?:number) {
   if (delay) await sleep(delay);
 
-  bot.deleteMessage(msg.chat.id, msg.message_id)
+  bot.deleteMessage(msg.chat.id, msg.message_id.toString())
     .catch(ignored => {});
 }
 
-function sleep (ms) {
+export function sleep (ms:number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function isAuthorized (msg) {
+export function isAuthorized (msg:TelegramBot.Message, dlDetails?:dlVars.DlVars) {
   for (var i = 0; i < constants.SUDO_USERS.length; i++) {
     if (constants.SUDO_USERS[i] === msg.from.id) return 0;
   }
-  if (dlVars.isDownloading && msg.from.id === dlVars.tgFromId) return 1;
+  if (dlDetails && dlDetails.isDownloading && msg.from.id === dlDetails.tgFromId) return 1;
   if (constants.AUTHORIZED_CHATS.indexOf(msg.chat.id) > -1 &&
     msg.chat.all_members_are_administrators) return 2;
   if (constants.AUTHORIZED_CHATS.indexOf(msg.chat.id) > -1) return 3;
   return -1;
 }
 
-function isAdmin (bot, msg, callback) {
+export function isAdmin (bot:TelegramBot, msg:TelegramBot.Message, callback:(err:string,isAdmin:boolean)=>void) {
   bot.getChatAdministrators(msg.chat.id)
     .then(members => {
       for (var i = 0; i < members.length; i++) {
@@ -43,12 +44,12 @@ function isAdmin (bot, msg, callback) {
 
 /**
  * Notifies an external webserver once a download is complete.
- * @param {Boolean} successful True is the download completed successfully
- * @param {String} gid The GID of the downloaded file
- * @param {Number} originGroup The Telegram chat ID of the group where the download started
- * @param {String} driveURL The URL of the uploaded file
+ * @param {boolean} successful True is the download completed successfully
+ * @param {string} gid The GID of the downloaded file
+ * @param {number} originGroup The Telegram chat ID of the group where the download started
+ * @param {string} driveURL The URL of the uploaded file
  */
-function notifyExternal (successful, gid, originGroup, driveURL) {
+export function notifyExternal (successful:boolean, gid:string, originGroup:number, driveURL?:string) {
   if (!constants.DOWNLOAD_NOTIFY_TARGET || !constants.DOWNLOAD_NOTIFY_TARGET.enabled) return;
   ariaTools.getStatus(gid, (err, message, filename, filesize) => {
     var name;
@@ -88,9 +89,3 @@ function notifyExternal (successful, gid, originGroup, driveURL) {
     req.end();
   });
 }
-
-module.exports.deleteMsg = deleteMsg;
-module.exports.sleep = sleep;
-module.exports.isAuthorized = isAuthorized;
-module.exports.isAdmin = isAdmin;
-module.exports.notifyExternal = notifyExternal;

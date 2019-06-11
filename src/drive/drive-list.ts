@@ -1,8 +1,8 @@
-const constants = require('../.constants.js');
-const driveAuth = require('./drive-auth.js');
-const {google} = require('googleapis');
-const utils = require('./drive-utils.js');
-const dlUtils = require('../download_tools/utils.js');
+import constants = require('../.constants.js');
+import driveAuth = require('./drive-auth.js');
+import {google} from 'googleapis';
+import utils = require('./drive-utils');
+import dlUtils = require('../download_tools/utils');
 
 /**
  * Searches for a given file on Google Drive. Only search the subfolders and files
@@ -11,13 +11,13 @@ const dlUtils = require('../download_tools/utils.js');
  * @param {string} fileName The name of the file to search for
  * @param {function} callback A function to call with an error, or a human-readable message
  */
-function listFiles (fileName, callback) {
+export function listFiles (fileName:string, callback:(err:string, message:string)=> void) {
   // Uncommenting the below line will prevent users from asking to list all files
   // if (fileName === '' || fileName ==='*' || fileName === '%') return;
 
   driveAuth.call((err, auth) => {
     if (err) {
-      callback(err);
+      callback(err, null);
       return;
     }
     const drive = google.drive({version: 'v3', auth});
@@ -28,9 +28,9 @@ function listFiles (fileName, callback) {
       orderBy: 'modifiedTime desc',
       pageSize: 20
     },
-    (err, res) => {
+    (err:Error, res:any) => {
       if (err) {
-        callback(err);
+        callback(err.message, null);
       } else {
         res = res['data']['files'];
         getMultipleFileLinks(res);
@@ -40,7 +40,7 @@ function listFiles (fileName, callback) {
   });
 }
 
-function generateSearchQuery (fileName, parent) {
+function generateSearchQuery (fileName:string, parent:string) {
   var q = '\'' + parent + '\' in parents and (';
   if (fileName.indexOf(' ') > -1) {
     for (var i = 0; i < 4; i++) {
@@ -67,7 +67,7 @@ function generateSearchQuery (fileName, parent) {
   return q;
 }
 
-function getMultipleFileLinks (files) {
+function getMultipleFileLinks (files:any[]) {
   for (var i = 0; i < files.length; i++) {
     files[i]['url'] = utils.getFileLink(
       files[i]['id'],
@@ -76,7 +76,7 @@ function getMultipleFileLinks (files) {
   }
 }
 
-function generateFilesListMessage (files) {
+function generateFilesListMessage (files:any[]) {
   var message = '';
   if (files.length > 0) {
     for (var i = 0; i < files.length; i++) {
@@ -94,5 +94,3 @@ function generateFilesListMessage (files) {
   }
   return message;
 }
-
-module.exports.listFiles = listFiles;
