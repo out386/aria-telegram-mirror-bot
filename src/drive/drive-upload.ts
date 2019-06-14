@@ -20,7 +20,7 @@ export function uploadFileOrFolder(filePath: string, mime: string, parent: strin
         mimeType: mime
       })
         .then(id => callback(null, id))
-        .catch(err => callback(err, null));
+        .catch(err => callback(err.message, null));
     }
   });
 }
