@@ -363,11 +363,11 @@ function cleanupDownload(gid: string, message: string, url?: string) {
 function initAria2() {
   ariaTools.openWebsocket((err) => {
     if (err) {
-      console.log('A2C: Failed to open websocket. Exiting.');
-      process.exit(1);
+      console.error('A2C: Failed to open websocket. Run aria.sh first. Exiting.');
+      process.exit();
     } else {
       websocketOpened = true;
-      console.log('A2C: Websocket opened');
+      console.log('A2C: Websocket opened. Bot ready.');
     }
   });
 

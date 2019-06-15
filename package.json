@@ -4,7 +4,7 @@
   "description": "A telegram bot to mirror files to Google Drive",
   "main": "index.js",
   "scripts": {
-    "start": "node --max_old_space_size=128 ./out/index.js"
+    "start": "NTBA_FIX_319=1 node --max_old_space_size=128 ./out/index.js"
   },
   "author": "Ritayan Chakraborty",
   "license": "MIT",

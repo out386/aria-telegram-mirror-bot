@@ -12,17 +12,18 @@ const PROGRESS_INCOMPLETE = ['▏', '▎', '▍', '▌', '▋', '▊', '▉'];
  * Then unsets the 'isDownloading' and 'isUploading' flags.
  */
 export function cleanupDownload() {
-  console.log('cleanupDownload: deleting');
+  console.log('cleanupDownload: Deleting the downloaded file(s)\n');
   fs.remove(constants.ARIA_DOWNLOAD_LOCATION)
     .then(() => {
       fs.mkdir(constants.ARIA_DOWNLOAD_LOCATION)
         .then(() => {
         })
-        .catch((ignored) => {
+        .catch((err) => {
+          console.error(`Failed to recreate the downloads directory: ${err.message}\n`);
         });
     })
     .catch((err) => {
-      console.log('cleanupDownload: ' + JSON.stringify(err, null, 2));
+      console.error(`cleanupDownload: ${err.message}\n`);
     });
 }
 
