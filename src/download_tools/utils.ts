@@ -66,20 +66,13 @@ export function indexOfStatus(details: dlVars.DlVars, chatId: number, startIndex
 }
 
 /**
- * Registers a new download status message, and causes a delete of the old status message
+ * Registers a new download status message, and facilitates deletion of the old status messages
  * in the same chat.
  * @param {dlVars.DlVars} details The dlownload details for the current download
  * @param {Object} msg The Message to be added
  */
 export function addStatus(details: dlVars.DlVars, msg: TelegramBot.Message) {
-  details.statusMsgsList.push({
-    message_id: msg.message_id,
-    chat: {
-      id: msg.chat.id,
-      all_members_are_administrators: msg.chat.all_members_are_administrators
-    },
-    from: { id: msg.from.id }
-  });
+  details.statusMsgsList.push(msg);
 }
 
 /**

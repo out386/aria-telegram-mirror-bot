@@ -4,7 +4,7 @@ import http = require('http');
 import ariaTools = require('./download_tools/aria-tools');
 import TelegramBot = require('node-telegram-bot-api');
 
-export async function deleteMsg (bot:TelegramBot, msg:TelegramBot.Message | dlVars.Message, delay?:number) {
+export async function deleteMsg (bot:TelegramBot, msg:TelegramBot.Message, delay?:number) {
   if (delay) await sleep(delay);
 
   bot.deleteMessage(msg.chat.id, msg.message_id.toString())

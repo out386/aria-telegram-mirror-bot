@@ -294,7 +294,7 @@ function updateStatusMessage(msg: TelegramBot.Message, text: string) {
   }
 }
 
-function editMessage(msg: TelegramBot.Message | dlVars.Message, text: string) {
+function editMessage(msg: TelegramBot.Message, text: string) {
   if (msg && msg.chat && msg.chat.id && msg.message_id) {
     bot.editMessageText(text, {
       chat_id: msg.chat.id,
