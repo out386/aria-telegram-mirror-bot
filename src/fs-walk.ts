@@ -16,7 +16,7 @@ export function uploadRecursive(path: string, parent: string, callback: (err: st
       return;
     }
     if (stat.isDirectory()) {
-      gdrive.uploadFileOrFolder(path, 'application/vnd.google-apps.folder', parent, (err, fileId) => {
+      gdrive.uploadFileOrFolder(path, 'application/vnd.google-apps.folder', parent, 0, (err, fileId) => {
         if (err) {
           callback(err, null);
         } else {
@@ -92,7 +92,7 @@ function processFileOrDir(path: string, parent: string, callback: (err: string, 
     }
     if (stat.isDirectory()) {
       // path is a directory. Do not call the callback until the path has been completely traversed.
-      gdrive.uploadFileOrFolder(path, 'application/vnd.google-apps.folder', parent, (err: string, fileId: string) => {
+      gdrive.uploadFileOrFolder(path, 'application/vnd.google-apps.folder', parent, 0, (err: string, fileId: string) => {
         if (err) {
           callback(err);
         } else {
@@ -104,7 +104,7 @@ function processFileOrDir(path: string, parent: string, callback: (err: string, 
       if (!mimeType) {
         mimeType = 'application/octet-stream';
       }
-      gdrive.uploadFileOrFolder(path, mimeType, parent, (err: string, fileId: string) => {
+      gdrive.uploadFileOrFolder(path, mimeType, parent, stat.size, (err: string, fileId: string) => {
         if (err) {
           callback(err);
         } else {
