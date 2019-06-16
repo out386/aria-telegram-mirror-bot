@@ -18,6 +18,10 @@ There is very little preventing users from using this to mirror pirated content.
 * `/cancelMirror`: Cancel the current mirroring task. Only the person who started the task, SUDO_USERS, and chat admins can use this command.
 * `/list <filename>` : Send links to downloads with the `filename` substring in the name. In case of too many downloads, only show the most recent few. 
 
+### Migrating from v1.0.0
+
+Aria-telegram-mirror-bot is now written in TypeScript. If you are migrating from v1.0.0, move your existing `.constants.js` to `src/.constants.js`, and re-read the [installation section](#Installation) and the [section on updating](#Updating), as some steps have changed.
+
 ### Pre-installation
 
 1. [Create a new bot](https://core.telegram.org/bots#3-how-do-i-create-a-bot) using Telegram's BotFather and copy your TOKEN.
@@ -67,7 +71,7 @@ There is very little preventing users from using this to mirror pirated content.
    * `nano src/.constants.js`
    * Now replace the placeholder values in this file with your values. Use the [Constants description](#Constants-description) section below for reference.
 
-7. Compile the project  by running `tsc`
+7. Compile the project by running `tsc`
 
 8. Set up OAuth:
 
@@ -147,6 +151,10 @@ Your web server should listen for a POST request containing the following JSON d
 * `originGroup`:  The Telegram chat ID for the chat the download was started in
 
 If `successful` is false, any or all of the fields of `file` might be absent. However, if present, they are correct/reliable.
+
+### Updating
+
+Run `git pull`, then run `tsc`. After compilation has finished, you can start the bot as described in [the above section](#Starting-after-installation).
 
 ### License
 The MIT License (MIT)
