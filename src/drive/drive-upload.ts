@@ -27,6 +27,7 @@ export function uploadFileOrFolder(filePath: string, mime: string, parent: strin
 
 function createFolderOrEmpty(drive: drive_v3.Drive, filePath: string, parent: string, mime:string, callback: (err: string, id: string) => void) {
   drive.files.create({
+    // @ts-ignore Unknown property error
     fields: 'id',
     resource: { 
       mimeType: mime,
@@ -53,6 +54,7 @@ export function getSharableLink(fileId:string, isFolder:boolean, callback: (err:
 
     drive.permissions.create({
       fileId: fileId,
+      // @ts-ignore Unknown property error
       resource: {
         role: 'reader',
         type: 'anyone'

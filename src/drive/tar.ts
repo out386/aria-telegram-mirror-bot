@@ -10,6 +10,7 @@ export function archive(srcName: string, destName: string, callback: (err: strin
 
   var stream = tar.c(
     {
+      // @ts-ignore Unknown property error
       maxReadSize: 163840,
       jobs: 1,
       cwd: constants.ARIA_DOWNLOAD_LOCATION

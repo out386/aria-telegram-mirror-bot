@@ -23,6 +23,7 @@ export function listFiles (fileName:string, callback:(err:string, message:string
     const drive = google.drive({version: 'v3', auth});
 
     drive.files.list({
+      // @ts-ignore Unknown property error
       fields: 'files(id, name, mimeType, size)',
       q: generateSearchQuery(fileName, constants.GDRIVE_PARENT_DIR_ID),
       orderBy: 'modifiedTime desc',
