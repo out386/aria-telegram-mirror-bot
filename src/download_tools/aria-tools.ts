@@ -1,10 +1,10 @@
 import downloadUtils = require('./utils');
 import drive = require('../fs-walk');
 const Aria2 = require('aria2');
-import dlVars = require('./vars.js');
 import constants = require('../.constants');
 import tar = require('../drive/tar');
 const diskspace = require('diskspace');
+import dlDetails = require('../dl_model/detail');
 
 const ariaOptions = {
   host: 'localhost',
@@ -50,9 +50,9 @@ export function setOnDownloadError(callback: (gid: string) => void) {
 }
 
 export function getAriaFilePath(gid: string, callback: (err: string, file: string) => void) {
-  aria2.getFiles(gid, (err: string, files: any[]) => {
+  aria2.getFiles(gid, (err: any, files: any[]) => {
     if (err) {
-      callback(err, null);
+      callback(err.message, null);
     } else {
       var filePath = downloadUtils.findAriaFilePath(files);
       if (filePath) {
@@ -74,36 +74,38 @@ export function getAriaFilePath(gid: string, callback: (err: string, file: strin
 export function getStatus(gid: string, callback: (err: string, message: string, filename: string, filesize: string) => void) {
   aria2.tellStatus(gid,
     ['status', 'totalLength', 'completedLength', 'downloadSpeed', 'files'],
-    (err: string, res: any) => {
-      var isActive;
+    (err: any, res: any) => {
       if (err) {
-        callback(err, null, null, null);
-        console.log('ERROR:', err);
-        return;
-      } else if (res['status'] === 'active') {
-        isActive = true;
+        callback(err.message, null, null, null);
+        console.log(`getStatus - ${gid}: ${err}`);
+      } else if (res.status === 'active') {
+        var statusMessage = downloadUtils.generateStatusMessage(parseFloat(res.totalLength),
+          parseFloat(res.completedLength),
+          parseFloat(res.downloadSpeed),
+          res.files);
+        callback(null, statusMessage.message, statusMessage.filename, statusMessage.filesize);
+      } else {
+        var filename = downloadUtils.getFileNameFromPath(downloadUtils.findAriaFilePath(res['files']));
+        var message;
+        if (res.status === 'waiting') {
+          message = `<i>${filename}</i> - Queued`;
+        } else {
+          message = `<i>${filename}</i> - ${res.status}`;
+        }
+        callback(null, message, filename, '0B');
       }
-      var statusMessage = downloadUtils.generateStatusMessage(parseFloat(res['totalLength']),
-        parseFloat(res['completedLength']),
-        parseFloat(res['downloadSpeed']),
-        res['files']);
-      if (!isActive) {
-        statusMessage.message = 'No active downloads.';
-      }
-      callback(null, statusMessage.message, statusMessage.filename, statusMessage.filesize);
     });
 }
 
-export function isDownloadMetadata(gid: string, callback: (err: string, isMetadata: boolean) => void) {
-  aria2.tellStatus(gid, ['followedBy'], (err: string, res: any) => {
+export function isDownloadMetadata(gid: string, callback: (err: string, isMetadata: boolean, newGid: string) => void) {
+  aria2.tellStatus(gid, ['followedBy'], (err: any, res: any) => {
     if (err) {
-      callback(err, null);
-      console.log('ERROR:', err);
+      callback(err.message, null, null);
     } else {
-      if (res['followedBy']) {
-        callback(null, true);
+      if (res.followedBy) {
+        callback(null, true, res.followedBy[0]);
       } else {
-        callback(null, false);
+        callback(null, false, null);
       }
     }
   });
@@ -112,9 +114,9 @@ export function isDownloadMetadata(gid: string, callback: (err: string, isMetada
 export function getFileSize(gid: string, callback: (err: string, fileSize: number) => void) {
   aria2.tellStatus(gid,
     ['totalLength'],
-    (err: string, res: any) => {
+    (err: any, res: any) => {
       if (err) {
-        callback(err, res);
+        callback(err.message, res);
       } else {
         callback(null, res['totalLength']);
       }
@@ -122,21 +124,20 @@ export function getFileSize(gid: string, callback: (err: string, fileSize: numbe
 }
 
 interface DriveUploadCompleteCallback {
-  (err: string, url: string, filePath: string, fileName: string, fileSize: number): void;
+  (err: string, gid: string, url: string, filePath: string, fileName: string, fileSize: number): void;
 }
 
 /**
  * Sets the upload flag, uploads the given path to Google Drive, then calls the callback,
  * cleans up the download directory, and unsets the download and upload flags.
  * If a directory  is given, and isTar is set in vars, archives the directory to a tar
- * before uploading. Archival fails if fileSize is more than or equal to half the free
- * space on disk.
+ * before uploading. Archival fails if fileSize is equal to or more than the free space on disk.
  * @param {dlVars.DlVars} dlDetails The dlownload details for the current download
  * @param {string} filePath The path of the file or directory to upload
  * @param {number} fileSize The size of the file
  * @param {function} callback The function to call with the link to the uploaded file
  */
-export function uploadFile(dlDetails: dlVars.DlVars, filePath: string, fileSize: number, callback: DriveUploadCompleteCallback) {
+export function uploadFile(dlDetails: dlDetails.DlVars, filePath: string, fileSize: number, callback: DriveUploadCompleteCallback) {
 
   dlDetails.isUploading = true;
   var fileName = downloadUtils.getFileNameFromPath(filePath);
@@ -144,13 +145,13 @@ export function uploadFile(dlDetails: dlVars.DlVars, filePath: string, fileSize:
   if (dlDetails.isTar) {
     if (filePath === realFilePath) {
       // If there is only one file, do not archive
-      driveUploadFile(realFilePath, fileName, fileSize, callback);
+      driveUploadFile(dlDetails.gid, realFilePath, fileName, fileSize, callback);
     } else {
       diskspace.check(constants.ARIA_DOWNLOAD_LOCATION_ROOT, (err: string, res: any) => {
         if (err) {
           console.log('uploadFile: diskspace: ' + err);
           // Could not archive, so upload normally
-          driveUploadFile(realFilePath, fileName, fileSize, callback);
+          driveUploadFile(dlDetails.gid, realFilePath, fileName, fileSize, callback);
           return;
         }
         if (res['free'] > fileSize) {
@@ -158,29 +159,29 @@ export function uploadFile(dlDetails: dlVars.DlVars, filePath: string, fileSize:
           var destName = fileName + '.tar';
           tar.archive(fileName, destName, (err: string, size: number) => {
             if (err) {
-              callback(err, null, null, null, null);
+              callback(err, dlDetails.gid, null, null, null, null);
             } else {
               console.log('Archive complete');
-              driveUploadFile(realFilePath + '.tar', destName, size, callback);
+              driveUploadFile(dlDetails.gid, realFilePath + '.tar', destName, size, callback);
             }
           });
         } else {
           console.log('uploadFile: Not enough space, uploading without archiving');
-          driveUploadFile(realFilePath, fileName, fileSize, callback);
+          driveUploadFile(dlDetails.gid, realFilePath, fileName, fileSize, callback);
         }
       });
     }
   } else {
-    driveUploadFile(realFilePath, fileName, fileSize, callback);
+    driveUploadFile(dlDetails.gid, realFilePath, fileName, fileSize, callback);
   }
 }
 
-function driveUploadFile(filePath: string, fileName: string, fileSize: number, callback: DriveUploadCompleteCallback) {
+function driveUploadFile(gid: string, filePath: string, fileName: string, fileSize: number, callback: DriveUploadCompleteCallback) {
   drive.uploadRecursive(filePath,
     constants.GDRIVE_PARENT_DIR_ID,
     (err: string, url: string) => {
       console.log('uploadFile: deleting');
-      callback(err, url, filePath, fileName, fileSize);
+      callback(err, gid, url, filePath, fileName, fileSize);
     });
 }
 

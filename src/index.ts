@@ -1,23 +1,23 @@
 import TelegramBot = require('node-telegram-bot-api');
 import downloadUtils = require('./download_tools/utils');
-import dlVars = require('./download_tools/vars.js');
 import ariaTools = require('./download_tools/aria-tools.js');
 import constants = require('./.constants.js');
 import msgTools = require('./msg-tools.js');
+import dlm = require('./dl_model/dl-manager');
 import driveList = require('./drive/drive-list.js');
 import driveUtils = require('./drive/drive-utils.js');
-
+import details = require('./dl_model/detail');
 const bot = new TelegramBot(constants.TOKEN, { polling: true });
 var websocketOpened = false;
 var statusInterval: NodeJS.Timeout;
-var dlDetails: dlVars.DlVars;
+var dlManager = dlm.DlManager.getInstance();
 
 initAria2();
 
 bot.on("polling_error", msg => console.log(msg.message));
 
 bot.onText(/^\/start/, (msg) => {
-  if (msgTools.isAuthorized(msg, dlDetails) < 0) {
+  if (msgTools.isAuthorized(msg) < 0) {
     sendUnauthorizedMessage(msg);
   } else {
     sendMessage(msg, 'You should know the commands already. Happy mirroring.');
@@ -25,7 +25,7 @@ bot.onText(/^\/start/, (msg) => {
 });
 
 bot.onText(/^\/mirrortar (.+)/i, (msg, match) => {
-  if (msgTools.isAuthorized(msg, dlDetails) < 0) {
+  if (msgTools.isAuthorized(msg) < 0) {
     sendUnauthorizedMessage(msg);
   } else {
     mirror(msg, match, true);
@@ -33,43 +33,26 @@ bot.onText(/^\/mirrortar (.+)/i, (msg, match) => {
 });
 
 bot.onText(/^\/mirror (.+)/i, (msg, match) => {
-  if (msgTools.isAuthorized(msg, dlDetails) < 0) {
+  if (msgTools.isAuthorized(msg) < 0) {
     sendUnauthorizedMessage(msg);
   } else {
     mirror(msg, match);
   }
 });
 
-bot.on('message', (msg) => {
-  if (dlDetails && dlDetails.isDownloading && msg.chat.id === dlDetails.tgChatId) {
-    if (dlDetails.messagesSinceStart) {
-      if (dlDetails.messagesSinceStart < 10) {
-        dlDetails.messagesSinceStart++;
-      }
-    } else {
-      dlDetails.messagesSinceStart = 1;
-    }
-  }
-});
-
 /**
- * Start a new download operation. Only one is allowed at a time. Make sure
- * that this is triggered by an authorized user, because this function itself
- * does not check for that.
+ * Start a new download operation. Make sure that this is triggered by an
+ * authorized user, because this function itself does not check for that.
  * @param {Object} msg The Message that triggered the download
  * @param {Array} match Message matches
  * @param {boolean} isTar Decides if this download should be archived before upload
  */
 function mirror(msg: TelegramBot.Message, match: RegExpExecArray, isTar?: boolean) {
   if (websocketOpened) {
-    if (dlDetails && dlDetails.isDownloading) {
-      sendMessage(msg, dlDetails.tgUsername + ' is mirroring something. Please wait.');
+    if (downloadUtils.isDownloadAllowed(match[1])) {
+      prepDownload(msg, match[1], isTar);
     } else {
-      if (downloadUtils.isDownloadAllowed(match[1])) {
-        prepDownload(msg, match[1], isTar);
-      } else {
-        sendMessage(msg, `Download failed. Blacklisted URL.`);
-      }
+      sendMessage(msg, `Download failed. Blacklisted URL.`);
     }
   } else {
     sendMessage(msg, `Websocket isn't open. Can't download`);
@@ -77,46 +60,43 @@ function mirror(msg: TelegramBot.Message, match: RegExpExecArray, isTar?: boolea
 }
 
 bot.onText(/^\/mirrorStatus/i, (msg) => {
-  if (msgTools.isAuthorized(msg, dlDetails) < 0) {
+  if (msgTools.isAuthorized(msg) < 0) {
     sendUnauthorizedMessage(msg);
   } else {
     sendStatusMessage(msg);
   }
 });
 
-function getStatus(msg: TelegramBot.Message, callback: (err: string, message: string) => void) {
-  var authorizedCode;
-  if (msg) {
-    authorizedCode = msgTools.isAuthorized(msg, dlDetails);
-  } else {
-    authorizedCode = 1;
-  }
-
-  if (authorizedCode > -1) {
-    if (dlDetails && dlDetails.isDownloading) {
-      if (dlDetails.isUploading) {
-        callback(null, 'Upload in progress.');
-      } else {
-        ariaTools.getStatus(dlDetails.downloadGid, (err, message, filename, filesize) => {
-          if (!err) {
-            handleDisallowedFilename(filename);
-            callback(null, message);
-          } else {
-            console.log('status: ', err);
-            callback(err, null);
-          }
-        });
-      }
+function getSingleStatus(dlDetails: details.DlVars, msg?: TelegramBot.Message): Promise<string> {
+  return new Promise((resolve, reject) => {
+    var authorizedCode;
+    if (msg) {
+      authorizedCode = msgTools.isAuthorized(msg);
     } else {
-      callback(null, 'No active downloads');
+      authorizedCode = 1;
     }
-  } else {
-    callback(null, `You aren't authorized to use this bot here.`);
-  }
+
+    if (authorizedCode > -1) {
+      ariaTools.getStatus(dlDetails.gid, (err, message, filename) => {
+        if (err) {
+          reject(`Error: ${dlDetails.gid} - ${err}`);
+        } else {
+          if (dlDetails.isUploading) {
+            resolve(`<i>${filename}</i> - Uploading`);
+          } else {
+            handleDisallowedFilename(dlDetails, filename);
+            resolve(message);
+          }
+        }
+      });
+    } else {
+      reject(`You aren't authorized to use this bot here.`);
+    }
+  });
 }
 
 bot.onText(/^\/list (.+)/i, (msg, match) => {
-  if (msgTools.isAuthorized(msg, dlDetails) < 0) {
+  if (msgTools.isAuthorized(msg) < 0) {
     sendUnauthorizedMessage(msg);
   } else {
     driveList.listFiles(match[1], (err, res) => {
@@ -130,7 +110,7 @@ bot.onText(/^\/list (.+)/i, (msg, match) => {
 });
 
 bot.onText(/^\/getFolder/i, (msg) => {
-  if (msgTools.isAuthorized(msg, dlDetails) < 0) {
+  if (msgTools.isAuthorized(msg) < 0) {
     sendUnauthorizedMessage(msg);
   } else {
     sendMessage(msg,
@@ -140,42 +120,49 @@ bot.onText(/^\/getFolder/i, (msg) => {
 });
 
 bot.onText(/^\/cancelMirror/i, (msg) => {
-  var authorizedCode = msgTools.isAuthorized(msg, dlDetails);
-  if (authorizedCode > -1 && authorizedCode < 3) {
-    cancelMirror(msg);
-  } else if (authorizedCode === 3) {
-    msgTools.isAdmin(bot, msg, (e, res) => {
-      if (res) {
-        cancelMirror(msg);
+  var authorizedCode = msgTools.isAuthorized(msg);
+  if (msg.reply_to_message) {
+    var dlDetails = dlManager.getDownloadByMsgId(msg.reply_to_message);
+    if (dlDetails) {
+      if (authorizedCode > -1 && authorizedCode < 3) {
+        cancelMirror(dlDetails, msg);
+      } else if (authorizedCode === 3) {
+        msgTools.isAdmin(bot, msg, (e, res) => {
+          if (res) {
+            cancelMirror(dlDetails, msg);
+          } else {
+            sendMessage(msg, 'You do not have permission to do that.');
+          }
+        });
       } else {
-        sendMessage(msg, 'You do not have the permission to do that.');
+        sendMessage(msg, 'You cannot use this bot here.');
       }
-    });
+    } else {
+      sendMessage(msg, `Reply to the command message, or the bot's download confirmation message` +
+        ` for the download that you want to cancel. Also make sure that the download even active.`);
+    }
   } else {
-    sendMessage(msg, 'You cannot use this bot here.');
+    sendMessage(msg, `Reply to the command message, or the bot's download confirmation message` +
+      ` for the download that you want to cancel.`);
   }
 });
 
-function cancelMirror(msg?: TelegramBot.Message) {
-  if (dlDetails && dlDetails.isDownloading) {
-    if (dlDetails.isUploading) {
-      if (msg) {
-        sendMessage(msg, 'Upload in progress. Cannot cancel.');
-      }
-    } else {
-      ariaTools.stopDownload(dlDetails.downloadGid, () => {
-        // Not sending a message here, because a cancel will fire
-        // the onDownloadStop notification, which will notify the
-        // person who started the download
-
-        if (msg && dlDetails.tgChatId !== msg.chat.id) {
-          // Notify if this is not the chat the download started in
-          sendMessage(msg, 'The download was canceled.');
-        }
-      });
+function cancelMirror(dlDetails: details.DlVars, cancelMsg?: TelegramBot.Message) {
+  if (dlDetails.isUploading) {
+    if (cancelMsg) {
+      sendMessage(cancelMsg, 'Upload in progress. Cannot cancel.');
     }
-  } else if (msg) {
-    sendMessage(msg, 'No download in progress.');
+  } else {
+    ariaTools.stopDownload(dlDetails.gid, () => {
+      // Not sending a message here, because a cancel will fire
+      // the onDownloadStop notification, which will notify the
+      // person who started the download
+
+      if (cancelMsg && dlDetails.tgChatId !== cancelMsg.chat.id) {
+        // Notify if this is not the chat the download started in
+        sendMessage(cancelMsg, 'The download was canceled.');
+      }
+    });
   }
 }
 
@@ -189,7 +176,7 @@ function cancelMirror(msg?: TelegramBot.Message) {
  * @returns {boolean} False if file name is disallowed, true otherwise,
  *                    or if undetermined
  */
-function handleDisallowedFilename(filename: string): boolean {
+function handleDisallowedFilename(dlDetails: details.DlVars, filename: string): boolean {
   if (dlDetails) {
     if (dlDetails.isDownloadAllowed === 0) return false;
     if (dlDetails.isDownloadAllowed === 1) return true;
@@ -199,7 +186,7 @@ function handleDisallowedFilename(filename: string): boolean {
     if (isAllowed === 0) {
       dlDetails.isDownloadAllowed = 0;
       if (dlDetails.isDownloading && !dlDetails.isUploading) {
-        cancelMirror();
+        cancelMirror(dlDetails);
       }
       return false;
     } else if (isAllowed === 1) {
@@ -211,22 +198,18 @@ function handleDisallowedFilename(filename: string): boolean {
 
 function prepDownload(msg: TelegramBot.Message, match: string, isTar: boolean) {
   sendMessage(msg, 'Preparing', -1, statusMessage => {
-    dlDetails = new dlVars.DlVars(msg, statusMessage, isTar);
-    download(match);
-  });
-}
-
-function download(match: string) {
-  ariaTools.addUri(match,
-    (err, gid) => {
+    ariaTools.addUri(match, (err, gid) => {
       if (err) {
         var message = `Failed to start the download. ${err.message}`;
         console.error(message);
         cleanupDownload(gid, message);
       } else {
+        dlManager.addDownload(gid, msg, statusMessage, isTar);
         console.log(`download:${match} gid:${gid}`);
       }
     });
+  });
+
 }
 
 function sendMessage(msg: TelegramBot.Message, text: string, delay?: number,
@@ -254,44 +237,98 @@ function sendUnauthorizedMessage(msg: TelegramBot.Message) {
   sendMessage(msg, `You aren't authorized to use this bot here.`);
 }
 
-function sendMessageReplyOriginal(message: string) {
-  if (dlDetails) {
-    bot.sendMessage(dlDetails.tgChatId, message, {
-      reply_to_message_id: dlDetails.tgMessageId,
-      parse_mode: 'HTML'
-    })
-      .catch((ignored) => { });
-  }
+function sendMessageReplyOriginal(dlDetails: details.DlVars, message: string): Promise<TelegramBot.Message> {
+  return bot.sendMessage(dlDetails.tgChatId, message, {
+    reply_to_message_id: dlDetails.tgMessageId,
+    parse_mode: 'HTML'
+  })
 }
 
-function sendStatusMessage(msg: TelegramBot.Message) {
-  // Skipping 0, which is the reply to the download command message
-  var index = downloadUtils.indexOfStatus(dlDetails, msg.chat.id, 1);
+/**
+ * Get a single status message for all active and queued downloads.
+ */
+function getStatusMessage(callback: (err: string, message: string) => void) {
+  var singleStatusArr: Promise<string>[] = [];
 
-  if (index > -1) {
-    msgTools.deleteMsg(bot, dlDetails.statusMsgsList[index]);
-    downloadUtils.deleteStatus(dlDetails, index);
+  for (var gid of Object.keys(dlManager.allDls)) {
+    var dlDetails: details.DlVars = dlManager.allDls[gid];
+    singleStatusArr.push(getSingleStatus(dlDetails));
   }
 
-  getStatus(msg, (err, text) => {
-    if (!err) {
-      sendMessage(msg, text, 60000, message => {
-        if (dlDetails) {
-          downloadUtils.addStatus(dlDetails, message);
-        }
-      }, true);
-    }
+  Promise.all(singleStatusArr)
+    .then(statusArr => {
+      callback(null, statusArr.reduce((prev, curr, i) => {
+        return i > 0 ? `${prev}\n${curr}` : `${curr}`;
+      }));
+    })
+    .catch(error => {
+      console.log(`getStatusMessage: ${error}`);
+      callback(error, null);
+    })
+}
+
+/**
+ * Sends a single status message for all active and queued downloads.
+ */
+function sendStatusMessage(msg: TelegramBot.Message) {
+  var lastStatus = dlManager.getStatus(msg.chat.id);
+
+  if (lastStatus) {
+    msgTools.deleteMsg(bot, lastStatus);
+    dlManager.deleteStatus(msg.chat.id);
+  }
+
+  getStatusMessage((err, messageText) => {
+    var finalMessage = err ? err : messageText;
+    sendMessage(msg, finalMessage, 60000, message => {
+      dlManager.addStatus(message);
+    }, true);
   });
 }
 
-function updateStatusMessage(msg: TelegramBot.Message, text: string) {
-  if (!text) {
-    getStatus(msg, (err, text) => {
-      if (!err) editMessage(msg, text);
-    });
+/**
+ * Updates the original status message sent by the bot as a reply to the
+ * download command message.
+ */
+function updateStatusMessage(dlDetails: details.DlVars, text?: string) {
+  if (text) {
+    editMessage(dlDetails.origStatusMsg, text);
   } else {
-    editMessage(msg, text);
+    getSingleStatus(dlDetails)
+      .then(res => {
+        editMessage(dlDetails.origStatusMsg, res);
+      })
+      .catch(err => {
+        console.log(`updateStatusMessage: ${err}`);
+        editMessage(dlDetails.origStatusMsg, err);
+      })
   }
+}
+
+/**
+ * Updates all general status messages
+ */
+function updateAllGeneralStatus() {
+  getStatusMessage((err, messageText) => {
+    var finalMessage = err ? err : messageText;
+    dlManager.forEachStatus(statusMessage => {
+      editMessage(statusMessage, finalMessage);
+    });
+  });
+}
+
+/**
+ * Updates all general status messages, and all single status messages
+ * sent to individual download commands.
+ */
+function updateAllStatus() {
+  var dlCount = 0;
+  // TODO: Both updateAllGeneralStatus() and updateStatusMessage() fetch the 
+  // status of each individual download. Rewrite to get each status only once.
+  updateAllGeneralStatus();
+  dlManager.forEachDownload(dlDetails => {
+    updateStatusMessage(dlDetails);
+  })
 }
 
 function editMessage(msg: TelegramBot.Message, text: string) {
@@ -305,59 +342,50 @@ function editMessage(msg: TelegramBot.Message, text: string) {
   }
 }
 
-function updateAllStatus(message: string) {
-  if (!dlDetails) return;
-  if (message) {
-    dlDetails.statusMsgsList.forEach(status => {
-      editMessage(status, message);
-    });
-  } else {
-    getStatus(null, (err, text) => {
-      if (err) return;
-      dlDetails.statusMsgsList.forEach(status => {
-        editMessage(status, text);
-      });
-    });
-  }
-}
-
 /**
  * Deletes the bot's original response to the download command, if less
  * than 10 messages have been sent to the group the download started in,
- * since the download was started. Also deletes if the bot doesn't have
- * message read permissions.
+ * since the download was started. Deleted messages also count. Message
+ * IDs are usually consecutive numbers, though that is not guaranteed by
+ * the Telegram API. This function is not important enough for that to matter.
  **/
-function deleteOrigReply() {
-  /* Reason: The download task has been completed, and a new status message
-   * has been sent. No need to clutter the group with dulpicate status.
-   */
-  if (dlDetails && (!dlDetails.messagesSinceStart || dlDetails.messagesSinceStart < 10)) {
-    msgTools.deleteMsg(bot, dlDetails.statusMsgsList[0], 0);
+function deleteOrigReply(dlDetails: details.DlVars, lastStatusMsg: TelegramBot.Message) {
+  if (lastStatusMsg.message_id - dlDetails.origStatusMsg.message_id < 10) {
+    msgTools.deleteMsg(bot, dlDetails.origStatusMsg, 0);
   }
 }
 
 /**
- * After a download is complete (failed or otherwise), call this to reset
- * download state and prepare for a new download.
+ * After a download is complete (failed or otherwise), call this to clean up.
  * @param gid The gid for the download that just finished
  * @param message The message to send as the Telegram download complete message
  * @param url The public Google Drive URL for the uploaded file
  */
 function cleanupDownload(gid: string, message: string, url?: string) {
-  clearInterval(statusInterval);
-  statusInterval = null;
-  sendMessageReplyOriginal(message);
-  updateAllStatus(message);
-  deleteOrigReply();
+  // TODO: Make sure to do this elsewhere
+  // clearInterval(statusInterval);
+  // statusInterval = null;
+  var dlDetails = dlManager.getDownloadByGid(gid);
   if (dlDetails) {
+    sendMessageReplyOriginal(dlDetails, message)
+      .then(msg => deleteOrigReply(dlDetails, msg))
+      .catch();
+    updateStatusMessage(dlDetails, message);
     if (url) {
       msgTools.notifyExternal(true, gid, dlDetails.tgChatId, url);
     } else {
       msgTools.notifyExternal(false, gid, dlDetails.tgChatId);
     }
+    dlManager.deleteDownload(gid);
+    updateAllGeneralStatus();
   }
-  dlDetails = null;
-  downloadUtils.cleanupDownload();
+  ariaTools.getAriaFilePath(gid, (err, file) => {
+    if (err || !file) {
+      console.log('Failed to get the file to delete during cleanup');
+    } else {
+      downloadUtils.deleteDownloadedFile(file);
+    }
+  });
 }
 
 function initAria2() {
@@ -372,19 +400,16 @@ function initAria2() {
   });
 
   ariaTools.setOnDownloadStart((gid) => {
+    var dlDetails = dlManager.getDownloadByGid(gid);
     if (!dlDetails) return;  // Can happen only in case of race conditions between start and stop download, not otherwise
 
-    dlDetails.isDownloading = true;
-    dlDetails.isUploading = false;
-    dlDetails.downloadGid = gid;
+    dlManager.moveDownloadToActive(dlDetails);
     console.log('start', gid);
-    // downloadUtils.setDownloadVars makes sure the first element in the list refers
-    // to the download command's message
-    updateStatusMessage(dlDetails.statusMsgsList[0], 'Download started.');
+    updateStatusMessage(dlDetails, 'Download started.');
 
-    ariaTools.getStatus(dlDetails.downloadGid, (err, message, filename) => {
+    ariaTools.getStatus(gid, (err, message, filename) => {
       if (!err) {
-        handleDisallowedFilename(filename);
+        handleDisallowedFilename(dlDetails, filename);
       }
     });
 
@@ -392,7 +417,9 @@ function initAria2() {
       statusInterval = setInterval(updateAllStatus, 4000);
     }
   });
+
   ariaTools.setOnDownloadStop((gid) => {
+    var dlDetails = dlManager.getDownloadByGid(gid);
     if (!dlDetails) return;  // Can happen only in case of race conditions between stop and download complete, not otherwise
 
     console.log('stop', gid);
@@ -402,12 +429,14 @@ function initAria2() {
     }
     cleanupDownload(gid, message);
   });
+
   ariaTools.setOnDownloadComplete((gid) => {
+    var dlDetails = dlManager.getDownloadByGid(gid);
     if (!dlDetails) return;  // Can happen only in case of race conditions between stop and download complete, not otherwise
 
     ariaTools.getAriaFilePath(gid, (err, file) => {
       if (err) {
-        console.log('onDownloadComplete: ' + JSON.stringify(err, null, 2));
+        console.log(`onDownloadComplete: ${err}`);
         var message = 'Upload failed. Could not get downloaded files.';
         cleanupDownload(gid, message);
         return;
@@ -416,7 +445,7 @@ function initAria2() {
       if (file) {
         ariaTools.getFileSize(gid, (err, size) => {
           if (err) {
-            console.log('onDownloadComplete: ' + JSON.stringify(err, null, 2));
+            console.log(`onDownloadComplete: ${err}`);
             var message = 'Upload failed. Could not get file size.';
             cleanupDownload(gid, message);
             return;
@@ -424,7 +453,7 @@ function initAria2() {
 
           var filename = downloadUtils.getFileNameFromPath(file);
           dlDetails.isUploading = true;
-          if (handleDisallowedFilename(filename)) {
+          if (handleDisallowedFilename(dlDetails, filename)) {
             console.log('onDownloadComplete: ' + file);
             ariaTools.uploadFile(dlDetails, file, size, driveUploadCompleteCallback);
           } else {
@@ -433,16 +462,14 @@ function initAria2() {
           }
         });
       } else {
-        ariaTools.isDownloadMetadata(gid, (err, isMetadata) => {
+        ariaTools.isDownloadMetadata(gid, (err, isMetadata, newGid) => {
           if (err) {
-            console.log('onDownloadComplete: isMetadata: ' + JSON.stringify(err, null, 2));
+            console.log(`onDownloadComplete: isMetadata: ${err}`);
             var message = 'Upload failed. Could not check if the file is metadata.';
             cleanupDownload(gid, message);
-            return;
-          }
-
-          if (isMetadata) {
-            console.log('onDownloadComplete: No files');
+          } else if (isMetadata) {
+            console.log(`onDownloadComplete: Changing GID to ${newGid}`);
+            dlManager.changeDownloadGid(gid, newGid);
           } else {
             console.log('onDownloadComplete: No files - not metadata.');
             var reason = 'Upload failed. Could not get files.';
@@ -452,7 +479,9 @@ function initAria2() {
       }
     });
   });
+
   ariaTools.setOnDownloadError((gid) => {
+    var dlDetails = dlManager.getDownloadByGid(gid);
     if (!dlDetails) return;  // Can happen only in case of race conditions between stop, download complete or download error, not otherwise
 
     console.log('error', gid);
@@ -461,7 +490,7 @@ function initAria2() {
   });
 }
 
-function driveUploadCompleteCallback(err: string, url: string, filePath: string, fileName: string, fileSize: number) {
+function driveUploadCompleteCallback(err: string, gid:string, url: string, filePath: string, fileName: string, fileSize: number) {
   var finalMessage;
   if (err) {
     var message;
@@ -472,7 +501,7 @@ function driveUploadCompleteCallback(err: string, url: string, filePath: string,
     }
     console.log(`uploadFile: ${filePath}: ${message}`);
     finalMessage = `Failed to upload <code>${fileName}</code> to Drive.${message}`;
-    cleanupDownload(dlDetails ? dlDetails.downloadGid : null, finalMessage);
+    cleanupDownload(gid, finalMessage);
   } else {
     if (fileSize) {
       var fileSizeStr = downloadUtils.formatSize(fileSize);
@@ -480,6 +509,6 @@ function driveUploadCompleteCallback(err: string, url: string, filePath: string,
     } else {
       finalMessage = `<a href='${url}'>${fileName}</a>`;
     }
-    cleanupDownload(dlDetails ? dlDetails.downloadGid : null, finalMessage, url);
+    cleanupDownload(gid, finalMessage, url);
   }
 }

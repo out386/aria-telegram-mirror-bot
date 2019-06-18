@@ -1,10 +1,10 @@
 # aria-telegram-mirror-bot
 
-This is a Telegram bot that uses [aria2](https://github.com/aria2/aria2) to download files over BitTorrent / HTTP(S) and uploads them to your Google Drive. This can be useful for downloading from slow servers. There are some features to try to reduce piracy.
+This is a Telegram bot that uses [aria2](https://github.com/aria2/aria2) to download files over BitTorrent / HTTP(S) and uploads them to your Google Drive. This can be useful for downloading from slow servers. Parallel downloading and download queuing are supported. There are some features to try to reduce piracy.
 
 ## Limitations
 
-This bot is meant to be used in small, closed groups. So, once deployed, it only works in whitelisted groups. Also, it does not scale, so only one file can be downloaded at a time. This reduces the load on the server running the bot. Download queuing is planned, but not implemented yet.
+This bot is meant to be used in small, closed groups. So, once deployed, it only works in whitelisted groups.
 
 ## Warning
 
@@ -14,8 +14,8 @@ There is very little preventing users from using this to mirror pirated content.
 
 * `/mirror <url>`: Download from the given URL and upload it to Google Drive. <url> can be HTTP(S), a BitTorrent magnet, or a HTTP(S) url to a BitTorrent .torrent file. A status message will be shown and updated while downloading.
 * `/mirrorTar <url>`: Same as `/mirror`, but archive multiple files into a tar before uploading it.
-* `/mirrorStatus`: Send a status message about the current download.
-* `/cancelMirror`: Cancel the current mirroring task. Only the person who started the task, SUDO_USERS, and chat admins can use this command.
+* `/mirrorStatus`: Send a status message about all active and queued downloads.
+* `/cancelMirror`: Cancel a particular mirroring task. To use this, send it as a reply to the message that started the download that you want to cancel, or to the message that the bot replied to it with. Only the person who started the task, SUDO_USERS, and chat admins can use this command.
 * `/list <filename>` : Send links to downloads with the `filename` substring in the name. In case of too many downloads, only show the most recent few. 
 
 ## Migrating from v1.0.0
@@ -26,15 +26,13 @@ Aria-telegram-mirror-bot is now written in TypeScript. If you are migrating from
 
 1. [Create a new bot](https://core.telegram.org/bots#3-how-do-i-create-a-bot) using Telegram's BotFather and copy your TOKEN.
 
-2. Optionally, also change the `setprivacy` attribute to `disabled` from BotFather. This allows the bot to be more cleaner about how it deletes status messages.
+2. Add the bot to your groups and optionally, give it the permission to delete messages. This permission is used to clean up status request messages from users. Not granting it will quickly fill the chat with useless messages from users.
 
-3. Add the bot to your groups and optionally, give it the permission to delete messages. This permission is used to clean up status request messages from users. Not granting it will quickly fill the chat with useless messages from users.
-
-4. Install [aria2](https://github.com/aria2/aria2).
+3. Install [aria2](https://github.com/aria2/aria2).
    * For Ubuntu:
      `sudo apt install aria2`
 
-5. Get Drive folder ID:
+4. Get Drive folder ID:
 
    * Visit [Google Drive](https://drive.google.com).
    * Create a new folder. The bot will upload files inside this folder.
@@ -64,7 +62,8 @@ Aria-telegram-mirror-bot is now written in TypeScript. If you are migrating from
 5. Configure the aria2 startup script:
 
    * `nano aria.sh`
-   * `ARIA_RPC_SECRET` (defined in line 1) is the secret (password) used to connect to aria2. Set this to whatever you want, and save the file with `ctrl + x`.
+   * `ARIA_RPC_SECRET` is the secret (password) used to connect to aria2. Set this to whatever you want, and save the file with `ctrl + x`.
+   * `MAX_CONCURRENT_DOWNLOADS` is the number of download jobs that can be active at the same time. Note that this does not affect the number of concurrent uploads. There is currently no limit for the number of concurrent uploads.
 
 6. Configure the bot:
 

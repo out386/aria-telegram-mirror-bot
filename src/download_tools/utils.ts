@@ -1,29 +1,17 @@
 import fs = require('fs-extra');
-import dlVars = require('./vars');
 import constants = require('../.constants');
-import TelegramBot = require('node-telegram-bot-api');
 
 const TYPE_METADATA = 'Metadata';
 const PROGRESS_MAX_SIZE = Math.floor(100 / 8);
 const PROGRESS_INCOMPLETE = ['▏', '▎', '▍', '▌', '▋', '▊', '▉'];
 
-/**
- * Deletes the download directory and remakes it.
- * Then unsets the 'isDownloading' and 'isUploading' flags.
- */
-export function cleanupDownload() {
-  console.log('cleanupDownload: Deleting the downloaded file(s)\n');
-  fs.remove(constants.ARIA_DOWNLOAD_LOCATION)
+export function deleteDownloadedFile(filePath: string) {
+  fs.remove(filePath)
     .then(() => {
-      fs.mkdir(constants.ARIA_DOWNLOAD_LOCATION)
-        .then(() => {
-        })
-        .catch((err) => {
-          console.error(`Failed to recreate the downloads directory: ${err.message}\n`);
-        });
+      console.log(`cleanup: Deleted ${filePath}\n`);
     })
     .catch((err) => {
-      console.error(`cleanupDownload: ${err.message}\n`);
+      console.error(`cleanup: Failed to delete ${filePath}: ${err.message}\n`);
     });
 }
 
@@ -47,42 +35,6 @@ export function getFileNameFromPath(filePath: string): string {
 
   if (!fileName) return TYPE_METADATA; // This really shouldn't be possible
   return fileName;
-}
-
-/**
- * Checks if the given chat already has a status message.
- * @param {dlVars.DlVars} details The dlownload details for the current download
- * @param {Number} chatId The ID of the chat to search in
- * @param {Number} startIndex Start searching from this index
- * @returns {Number} The index of the status. -1 if not found
- */
-export function indexOfStatus(details: dlVars.DlVars, chatId: number, startIndex: number): number {
-  if (!details) return -1;
-
-  var sList = details.statusMsgsList;
-  for (var i = startIndex; i < sList.length; i++) {
-    if (sList[i].chat.id == chatId) return i;
-  }
-  return -1;
-}
-
-/**
- * Registers a new download status message, and facilitates deletion of the old status messages
- * in the same chat.
- * @param {dlVars.DlVars} details The dlownload details for the current download
- * @param {Object} msg The Message to be added
- */
-export function addStatus(details: dlVars.DlVars, msg: TelegramBot.Message) {
-  details.statusMsgsList.push(msg);
-}
-
-/**
- * Unregisters a status message
- * @param {dlVars.DlVars} details The dlownload details for the current download
- * @param {number} index The index of the message
- */
-export function deleteStatus(details: dlVars.DlVars, index: number) {
-  details.statusMsgsList.splice(index, 1);
 }
 
 /**
@@ -145,8 +97,8 @@ export function generateStatusMessage(totalLength: number, completedLength: numb
   var totalLengthStr = formatSize(totalLength);
   var progressString = generateProgress(progress);
   var speedStr = formatSize(speed);
-  var message = `Filename: <i>${fileName}</i>\nProgress: <code>${progressString}</code>` +
-    ` of ${totalLengthStr} at ${speedStr}ps` + '\nETA : ' + downloadETA(totalLength, completedLength, speed);
+  var eta = downloadETA(totalLength, completedLength, speed);
+  var message = `<i>${fileName}</i> - <code>${progressString}</code> of ${totalLengthStr} at ${speedStr}ps, ETA: ${eta}`;
   var status = {
     message: message,
     filename: fileName,
