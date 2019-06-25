@@ -113,6 +113,23 @@ export function findAriaFilePath(files: any[]): string {
  * @param {any[]} files The list of files in the download
  * @returns {StatusMessage} An object containing a printable status message and the file name
  */
+
+function timeLeft (totalLength: number, speed: number) {
+ var time = (totalLength/1048576)/((speed/125000)/8);
+ var second = Math.floor(time%60);
+ var minutes = Math.floor((time/60)%60);
+ var hours = Math.floor(time/3600);
+ if (hours > 999) {
+  return 'Calculating';
+ } else if (hours === 0 && minutes != 0) {
+  return minutes + 'm' + ' ' + second +'s';
+ } else if(hours === 0 && minutes === 0) {
+ return second + 's';
+ } else {
+  return hours + 'hr' + ' ' + minutes + 'm' + ' ' + second + 's';
+ }
+}
+
 export function generateStatusMessage(totalLength: number, completedLength: number, speed: number, files: any[]): StatusMessage {
   var fileName = findAriaFilePath(files);
   fileName = getFileNameFromPath(fileName);
@@ -126,7 +143,7 @@ export function generateStatusMessage(totalLength: number, completedLength: numb
   var progressString = generateProgress(progress);
   var speedStr = formatSize(speed);
   var message = `Filename: <i>${fileName}</i>\nProgress: <code>${progressString}</code>` +
-    ` of ${totalLengthStr} at ${speedStr}ps`;
+    ` of ${totalLengthStr} at ${speedStr}ps` + '\nETA : ' + timeLeft(totalLength - completedLength,speed) ;
   var status = {
     message: message,
     filename: fileName,
