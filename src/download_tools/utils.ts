@@ -58,7 +58,7 @@ export function getFileNameFromPath(filePath: string): string {
  */
 export function indexOfStatus(details: dlVars.DlVars, chatId: number, startIndex: number): number {
   if (!details) return -1;
-  
+
   var sList = details.statusMsgsList;
   for (var i = startIndex; i < sList.length; i++) {
     if (sList[i].chat.id == chatId) return i;
@@ -105,6 +105,26 @@ export function findAriaFilePath(files: any[]): string {
   }
 }
 
+function downloadETA(totalLength: number, completedLength: number, speed: number): string {
+  if (speed === 0)
+    return '-';
+  var time = (totalLength - completedLength) / speed;
+  var seconds = Math.floor(time % 60);
+  var minutes = Math.floor((time / 60) % 60);
+  var hours = Math.floor(time / 3600);
+
+  if (hours === 0) {
+    if (minutes === 0) {
+      return `${seconds}s`;
+    } else {
+      return `${minutes}m ${seconds}s`;
+    }
+  } else {
+    return `${hours}h ${minutes}m ${seconds}s`;
+  }
+}
+
+
 /**
  * Generates a human-readable message for the status of the given download
  * @param {number} totalLength The total size of the download
@@ -126,7 +146,7 @@ export function generateStatusMessage(totalLength: number, completedLength: numb
   var progressString = generateProgress(progress);
   var speedStr = formatSize(speed);
   var message = `Filename: <i>${fileName}</i>\nProgress: <code>${progressString}</code>` +
-    ` of ${totalLengthStr} at ${speedStr}ps`;
+    ` of ${totalLengthStr} at ${speedStr}ps` + '\nETA : ' + downloadETA(totalLength, completedLength, speed);
   var status = {
     message: message,
     filename: fileName,
