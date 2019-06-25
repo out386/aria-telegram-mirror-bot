@@ -5,7 +5,7 @@ import TelegramBot = require('node-telegram-bot-api');
 
 const TYPE_METADATA = 'Metadata';
 const PROGRESS_MAX_SIZE = Math.floor(100 / 8);
-const PROGRESS_INCOMPLETE = ['▏', '▎', '▍', '▌', '▋', '▊', '▉'];
+const PROGRESS_INCOMPLETE = ['⣦', '⣦', '⣦', '⣀', '⣦', '⣦', '⣦'];
 
 /**
  * Deletes the download directory and remakes it.
@@ -163,7 +163,7 @@ function generateProgress(p: number): string {
   var str = '[';
   var cFull = Math.floor(p / 8);
   var cPart = p % 8 - 1;
-  str += '█'.repeat(cFull);
+  str += '⣿'.repeat(cFull);
   if (cPart >= 0) {
     str += PROGRESS_INCOMPLETE[cPart];
   }
