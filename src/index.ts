@@ -7,6 +7,7 @@ import dlm = require('./dl_model/dl-manager');
 import driveList = require('./drive/drive-list.js');
 import driveUtils = require('./drive/drive-utils.js');
 import details = require('./dl_model/detail');
+import filenameUtils = require('./download_tools/filename-utils');
 const bot = new TelegramBot(constants.TOKEN, { polling: true });
 var websocketOpened = false;
 var statusInterval: NodeJS.Timeout;
@@ -182,7 +183,7 @@ function handleDisallowedFilename(dlDetails: details.DlVars, filename: string): 
     if (dlDetails.isDownloadAllowed === 1) return true;
     if (!filename) return true;
 
-    var isAllowed = downloadUtils.isFilenameAllowed(filename);
+    var isAllowed = filenameUtils.isFilenameAllowed(filename);
     if (isAllowed === 0) {
       dlDetails.isDownloadAllowed = 0;
       if (dlDetails.isDownloading && !dlDetails.isUploading) {
@@ -458,7 +459,7 @@ function initAria2() {
             return;
           }
 
-          var filename = downloadUtils.getFileNameFromPath(file);
+          var filename = filenameUtils.getFileNameFromPath(file, null);
           dlDetails.isUploading = true;
           if (handleDisallowedFilename(dlDetails, filename)) {
             console.log('onDownloadComplete: ' + file);

@@ -5,6 +5,7 @@ import constants = require('../.constants');
 import tar = require('../drive/tar');
 const diskspace = require('diskspace');
 import dlDetails = require('../dl_model/detail');
+import filenameUtils = require('./filename-utils');
 
 const ariaOptions = {
   host: 'localhost',
@@ -54,9 +55,9 @@ export function getAriaFilePath(gid: string, callback: (err: string, file: strin
     if (err) {
       callback(err.message, null);
     } else {
-      var filePath = downloadUtils.findAriaFilePath(files);
+      var filePath = filenameUtils.findAriaFilePath(files);
       if (filePath) {
-        callback(null, filePath);
+        callback(null, filePath.path);
       } else {
         callback(null, null);
       }
@@ -85,7 +86,8 @@ export function getStatus(gid: string, callback: (err: string, message: string, 
           res.files);
         callback(null, statusMessage.message, statusMessage.filename, statusMessage.filesize);
       } else {
-        var filename = downloadUtils.getFileNameFromPath(downloadUtils.findAriaFilePath(res['files']));
+        var filePath = filenameUtils.findAriaFilePath(res['files']);
+        var filename = filenameUtils.getFileNameFromPath(filePath.path, filePath.inputPath, filePath.downloadUri);
         var message;
         if (res.status === 'waiting') {
           message = `<i>${filename}</i> - Queued`;
@@ -140,7 +142,7 @@ interface DriveUploadCompleteCallback {
 export function uploadFile(dlDetails: dlDetails.DlVars, filePath: string, fileSize: number, callback: DriveUploadCompleteCallback) {
 
   dlDetails.isUploading = true;
-  var fileName = downloadUtils.getFileNameFromPath(filePath);
+  var fileName = filenameUtils.getFileNameFromPath(filePath, null);
   var realFilePath = constants.ARIA_DOWNLOAD_LOCATION + '/' + fileName;
   if (dlDetails.isTar) {
     if (filePath === realFilePath) {

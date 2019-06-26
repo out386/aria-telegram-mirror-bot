@@ -1,7 +1,7 @@
 import fs = require('fs-extra');
+import filenameUtils = require('./filename-utils');
 import constants = require('../.constants');
 
-const TYPE_METADATA = 'Metadata';
 const PROGRESS_MAX_SIZE = Math.floor(100 / 8);
 const PROGRESS_INCOMPLETE = ['▏', '▎', '▍', '▌', '▋', '▊', '▉'];
 
@@ -13,48 +13,6 @@ export function deleteDownloadedFile(filePath: string) {
     .catch((err) => {
       console.error(`cleanup: Failed to delete ${filePath}: ${err.message}\n`);
     });
-}
-
-/**
- * Given the path to a file in the download directory, returns
- * the name of the file. If the file is in a subdirectory of the
- * download directory, returns the name of that subdirectory.
- * @param {string} filePath The name of a file that was downloaded
- * @returns {string} The name of the file or directory that was downloaded
- */
-export function getFileNameFromPath(filePath: string): string {
-  if (!filePath) return TYPE_METADATA;
-
-  var baseDirLength = constants.ARIA_DOWNLOAD_LOCATION.length;
-  var fileName = filePath.substring(baseDirLength + 1);
-  var nameEndIndex = fileName.indexOf('/');
-  if (nameEndIndex === -1) {
-    nameEndIndex = fileName.length;
-  }
-  fileName = fileName.substring(0, nameEndIndex);
-
-  if (!fileName) return TYPE_METADATA; // This really shouldn't be possible
-  return fileName;
-}
-
-/**
- * Finds the path of the file/torrent that Aria2 is downloading from a list of
- * files returned by Aria2.
- * @param {Object[]} files The list of files returned by Aria2
- * @returns {string} The name of the download, or null if it is a torrent metadata.
- */
-export function findAriaFilePath(files: any[]): string {
-  var filePath = files[0]['path'];
-  if (filePath.startsWith(constants.ARIA_DOWNLOAD_LOCATION)) {
-    if (filePath.substring(filePath.lastIndexOf('.') + 1) !== 'torrent') {
-      // This is not a torrent's metadata
-      return filePath;
-    } else {
-      return null;
-    }
-  } else {
-    return null;
-  }
 }
 
 function downloadETA(totalLength: number, completedLength: number, speed: number): string {
@@ -86,8 +44,8 @@ function downloadETA(totalLength: number, completedLength: number, speed: number
  * @returns {StatusMessage} An object containing a printable status message and the file name
  */
 export function generateStatusMessage(totalLength: number, completedLength: number, speed: number, files: any[]): StatusMessage {
-  var fileName = findAriaFilePath(files);
-  fileName = getFileNameFromPath(fileName);
+  var filePath = filenameUtils.findAriaFilePath(files);
+  var fileName = filenameUtils.getFileNameFromPath(filePath.path, filePath.inputPath, filePath.downloadUri);
   var progress;
   if (totalLength === 0) {
     progress = 0;
@@ -150,14 +108,4 @@ export function isDownloadAllowed(url: string): boolean {
     if (url.indexOf(constants.ARIA_FILTERED_DOMAINS[i]) > -1) return false;
   }
   return true;
-}
-
-export function isFilenameAllowed(filename: string): number {
-  if (!constants.ARIA_FILTERED_FILENAMES) return 1;
-  if (filename === TYPE_METADATA) return -1;
-
-  for (var i = 0; i < constants.ARIA_FILTERED_FILENAMES.length; i++) {
-    if (filename.indexOf(constants.ARIA_FILTERED_FILENAMES[i]) > -1) return 0;
-  }
-  return 1;
 }
