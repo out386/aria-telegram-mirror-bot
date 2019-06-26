@@ -250,16 +250,19 @@ function sendMessageReplyOriginal(dlDetails: details.DlVars, message: string): P
 function getStatusMessage(callback: (err: string, message: string) => void) {
   var singleStatusArr: Promise<string>[] = [];
 
-  for (var gid of Object.keys(dlManager.allDls)) {
-    var dlDetails: details.DlVars = dlManager.allDls[gid];
+  dlManager.forEachDownload(dlDetails => {
     singleStatusArr.push(getSingleStatus(dlDetails));
-  }
+  });
 
   Promise.all(singleStatusArr)
     .then(statusArr => {
-      callback(null, statusArr.reduce((prev, curr, i) => {
-        return i > 0 ? `${prev}\n${curr}` : `${curr}`;
-      }));
+      if (statusArr && statusArr.length > 0) {
+        callback(null, statusArr.reduce((prev, curr, i) => {
+          return i > 0 ? `${prev}\n\n${curr}` : `${curr}`;
+        }));
+      } else {
+        callback(null, 'No active or queued downloads');
+      }
     })
     .catch(error => {
       console.log(`getStatusMessage: ${error}`);
@@ -327,8 +330,15 @@ function updateAllStatus() {
   // status of each individual download. Rewrite to get each status only once.
   updateAllGeneralStatus();
   dlManager.forEachDownload(dlDetails => {
+    dlCount++;
     updateStatusMessage(dlDetails);
-  })
+  });
+
+  if (dlCount === 0) {
+    // No more active or queued downloads, let's stop the status refresh timer
+    clearInterval(statusInterval);
+    statusInterval = null;
+  }
 }
 
 function editMessage(msg: TelegramBot.Message, text: string) {
@@ -362,9 +372,6 @@ function deleteOrigReply(dlDetails: details.DlVars, lastStatusMsg: TelegramBot.M
  * @param url The public Google Drive URL for the uploaded file
  */
 function cleanupDownload(gid: string, message: string, url?: string) {
-  // TODO: Make sure to do this elsewhere
-  // clearInterval(statusInterval);
-  // statusInterval = null;
   var dlDetails = dlManager.getDownloadByGid(gid);
   if (dlDetails) {
     sendMessageReplyOriginal(dlDetails, message)
@@ -490,7 +497,7 @@ function initAria2() {
   });
 }
 
-function driveUploadCompleteCallback(err: string, gid:string, url: string, filePath: string, fileName: string, fileSize: number) {
+function driveUploadCompleteCallback(err: string, gid: string, url: string, filePath: string, fileName: string, fileSize: number) {
   var finalMessage;
   if (err) {
     var message;
