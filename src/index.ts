@@ -476,7 +476,7 @@ function initAria2() {
             var message = 'Upload failed. Could not check if the file is metadata.';
             cleanupDownload(gid, message);
           } else if (isMetadata) {
-            console.log(`onDownloadComplete: Changing GID to ${newGid}`);
+            console.log(`onDownloadComplete: Changing GID from ${gid} to ${newGid}`);
             dlManager.changeDownloadGid(gid, newGid);
           } else {
             console.log('onDownloadComplete: No files - not metadata.');
@@ -489,12 +489,14 @@ function initAria2() {
   });
 
   ariaTools.setOnDownloadError((gid) => {
-    var dlDetails = dlManager.getDownloadByGid(gid);
-    if (!dlDetails) return;  // Can happen only in case of race conditions between stop, download complete or download error, not otherwise
-
     console.log('error', gid);
     var message = 'Download error.';
-    cleanupDownload(gid, message);
+
+    // Not calling cleanupDownload immediately because if the files download
+    // of a torrent fails, setOnDownloadError sometimes gets called before
+    // onDownloadComplete for the metadata gets called. That means that the gid
+    // change doesn't happen before cleanupDownload gets called.
+    setTimeout(() => cleanupDownload(gid, message), 4000);
   });
 }
 
