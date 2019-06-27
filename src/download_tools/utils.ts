@@ -5,13 +5,13 @@ import constants = require('../.constants');
 const PROGRESS_MAX_SIZE = Math.floor(100 / 8);
 const PROGRESS_INCOMPLETE = ['▏', '▎', '▍', '▌', '▋', '▊', '▉'];
 
-export function deleteDownloadedFile(filePath: string) {
-  fs.remove(filePath)
+export function deleteDownloadedFile(subdirName: string) {
+  fs.remove(`${constants.ARIA_DOWNLOAD_LOCATION}/${subdirName}`)
     .then(() => {
-      console.log(`cleanup: Deleted ${filePath}\n`);
+      console.log(`cleanup: Deleted ${subdirName}\n`);
     })
     .catch((err) => {
-      console.error(`cleanup: Failed to delete ${filePath}: ${err.message}\n`);
+      console.error(`cleanup: Failed to delete ${subdirName}: ${err.message}\n`);
     });
 }
 

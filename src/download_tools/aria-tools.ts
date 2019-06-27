@@ -153,7 +153,7 @@ export function uploadFile(dlDetails: dlDetails.DlVars, filePath: string, fileSi
 
   dlDetails.isUploading = true;
   var fileName = filenameUtils.getFileNameFromPath(filePath, null);
-  var realFilePath = constants.ARIA_DOWNLOAD_LOCATION + '/' + fileName;
+  var realFilePath = filenameUtils.getActualDownloadPath(filePath);
   if (dlDetails.isTar) {
     if (filePath === realFilePath) {
       // If there is only one file, do not archive
@@ -169,7 +169,7 @@ export function uploadFile(dlDetails: dlDetails.DlVars, filePath: string, fileSi
         if (res['free'] > fileSize) {
           console.log('Starting archival');
           var destName = fileName + '.tar';
-          tar.archive(fileName, destName, (err: string, size: number) => {
+          tar.archive(realFilePath, destName, (err: string, size: number) => {
             if (err) {
               callback(err, dlDetails.gid, null, null, null, null);
             } else {
@@ -203,8 +203,8 @@ export function stopDownload(gid: string, callback: () => void) {
   });
 }
 
-export function addUri(uri: string, callback: (err: any, gid: string) => void) {
-  aria2.addUri([uri], { dir: constants.ARIA_DOWNLOAD_LOCATION })
+export function addUri(uri: string, dlDir: string, callback: (err: any, gid: string) => void) {
+  aria2.addUri([uri], { dir: `${constants.ARIA_DOWNLOAD_LOCATION}/${dlDir}` })
     .then((gid: string) => {
       callback(null, gid);
     })

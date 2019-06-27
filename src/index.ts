@@ -1,4 +1,5 @@
 import TelegramBot = require('node-telegram-bot-api');
+import uuid = require('uuid/v4');
 import downloadUtils = require('./download_tools/utils');
 import ariaTools = require('./download_tools/aria-tools.js');
 import constants = require('./.constants.js');
@@ -199,8 +200,9 @@ function handleDisallowedFilename(dlDetails: details.DlVars, filename: string): 
 
 function prepDownload(msg: TelegramBot.Message, match: string, isTar: boolean) {
   sendMessage(msg, 'Preparing', -1, statusMessage => {
-    ariaTools.addUri(match, (err, gid) => {
-      dlManager.addDownload(gid, msg, statusMessage, isTar);
+    var dlDir = uuid();
+    ariaTools.addUri(match, dlDir, (err, gid) => {
+      dlManager.addDownload(gid, dlDir, msg, statusMessage, isTar);
       if (err) {
         var message = `Failed to start the download. ${err.message}`;
         console.error(message);
@@ -386,14 +388,11 @@ function cleanupDownload(gid: string, message: string, url?: string) {
     }
     dlManager.deleteDownload(gid);
     updateAllGeneralStatus();
+    downloadUtils.deleteDownloadedFile(dlDetails.downloadDir);
+  } else {
+    // Why is this message so calm? We should be SCREAMING at this point!
+    console.error(`Could not get dlDetails for ${gid}`);
   }
-  ariaTools.getAriaFilePath(gid, (err, file) => {
-    if (err || !file) {
-      console.log('Failed to get the file to delete during cleanup\n');
-    } else {
-      downloadUtils.deleteDownloadedFile(file);
-    }
-  });
 }
 
 function initAria2() {
@@ -511,12 +510,7 @@ function initAria2() {
 function driveUploadCompleteCallback(err: string, gid: string, url: string, filePath: string, fileName: string, fileSize: number) {
   var finalMessage;
   if (err) {
-    var message;
-    try {
-      message = JSON.stringify(err, null, 2);
-    } catch (ignored) {
-      message = err;
-    }
+    var message = err;
     console.log(`uploadFile: ${filePath}: ${message}`);
     finalMessage = `Failed to upload <code>${fileName}</code> to Drive.${message}`;
     cleanupDownload(gid, finalMessage);

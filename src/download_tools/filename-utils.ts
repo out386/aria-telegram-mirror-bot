@@ -37,7 +37,8 @@ export function findAriaFilePath(files: any[]): FilePath {
 /**
  * Given the path to a file in the download directory, returns the name of the
  * file. If the file is in a subdirectory of the download directory, returns
- * the name of that subdirectory.
+ * the name of that subdirectory. Assumes that the file is a direct or indirect
+ * child of a subdirectory of ARIA_DOWNLOAD_LOCATION, with a 36 character name.
  * If the path is missing, it tries to return an unreliable name from the URI
  * of the download. If the URI is also missing, returns TYPE_METADATA.
  * @param {string} filePath The name of a file that was downloaded
@@ -48,16 +49,36 @@ export function getFileNameFromPath(filePath: string, inputPath: string, downloa
     return getFilenameFromUri(inputPath, downloadUri);
   }
 
-  var baseDirLength = constants.ARIA_DOWNLOAD_LOCATION.length;
-  var nameEndIndex = filePath.indexOf('/', baseDirLength + 1);
+  // +2 because there are two /'s, after ARIA_DOWNLOAD_LOCATION and after the 36 character subdir
+  var baseDirLength = constants.ARIA_DOWNLOAD_LOCATION.length + 38;
+  var nameEndIndex = filePath.indexOf('/', baseDirLength);
   if (nameEndIndex === -1) {
     nameEndIndex = filePath.length;
   }
-  var fileName = filePath.substring(baseDirLength + 1, nameEndIndex);
+  var fileName = filePath.substring(baseDirLength, nameEndIndex);
 
   if (!fileName) {// This really shouldn't be possible
     return getFilenameFromUri(inputPath, downloadUri);
   }
+  return fileName;
+}
+
+/**
+ * Given the path to a file in the download, returns the path of the top-level
+ * directory of the download. If there is only one file in the download, returns
+ * the path of that file. Assumes that the file is a direct or indirect child of
+ * a subdirectory of ARIA_DOWNLOAD_LOCATION, with a 36 character name.
+ * @param {string} filePath The name of a file that was downloaded
+ * @returns {string} The name of the file or directory that was downloaded
+ */
+export function getActualDownloadPath(filePath: string): string {
+  // +2 because there are two /'s, after ARIA_DOWNLOAD_LOCATION and after the 36 character subdir
+  var baseDirLength = constants.ARIA_DOWNLOAD_LOCATION.length + 38;
+  var nameEndIndex = filePath.indexOf('/', baseDirLength);
+  if (nameEndIndex === -1) {
+    nameEndIndex = filePath.length;
+  }
+  var fileName = filePath.substring(0, nameEndIndex);
   return fileName;
 }
 

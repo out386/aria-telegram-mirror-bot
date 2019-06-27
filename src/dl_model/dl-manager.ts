@@ -25,8 +25,8 @@ export class DlManager {
     return DlManager.instance;
   }
 
-  addDownload(gid: string, msg: TelegramBot.Message, statusMsg: TelegramBot.Message, isTar: boolean) {
-    var detail = new dlDetails.DlVars(gid, msg, statusMsg, isTar);
+  addDownload(gid: string, dlDir: string, msg: TelegramBot.Message, statusMsg: TelegramBot.Message, isTar: boolean) {
+    var detail = new dlDetails.DlVars(gid, msg, statusMsg, isTar, dlDir);
     this.allDls[gid] = detail;
   }
 
@@ -53,7 +53,7 @@ export class DlManager {
    * @param oldGid The GID of the original download (the download metadata)
    * @param newGid The GID of the new download (the files specified in the metadata)
    */
-  changeDownloadGid(oldGid: string, newGid:string) {
+  changeDownloadGid(oldGid: string, newGid: string) {
     var dlDetails = this.getDownloadByGid(oldGid);
     this.deleteDownload(oldGid);
     dlDetails.gid = newGid;
