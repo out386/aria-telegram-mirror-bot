@@ -164,6 +164,11 @@ function cancelMirror(dlDetails: details.DlVars, cancelMsg?: TelegramBot.Message
         // Notify if this is not the chat the download started in
         sendMessage(cancelMsg, 'The download was canceled.');
       }
+      if (!dlDetails.isDownloading) {
+        // onDownloadStopped does not fire for downloads that haven't started yet
+        // So calling this here
+        ariaOnDownloadStop(dlDetails.gid);
+      }
     });
   }
 }
@@ -395,6 +400,18 @@ function cleanupDownload(gid: string, message: string, url?: string) {
   }
 }
 
+function ariaOnDownloadStop(gid: string) {
+  var dlDetails = dlManager.getDownloadByGid(gid);
+  if (!dlDetails) return;  // Can happen only in case of race conditions between stop and download complete, not otherwise
+
+  console.log('stop', gid);
+  var message = 'Download stopped.';
+  if (dlDetails.isDownloadAllowed === 0) {
+    message += ' Blacklisted file name.';
+  }
+  cleanupDownload(gid, message);
+}
+
 function initAria2() {
   ariaTools.openWebsocket((err) => {
     if (err) {
@@ -426,15 +443,7 @@ function initAria2() {
   });
 
   ariaTools.setOnDownloadStop((gid) => {
-    var dlDetails = dlManager.getDownloadByGid(gid);
-    if (!dlDetails) return;  // Can happen only in case of race conditions between stop and download complete, not otherwise
-
-    console.log('stop', gid);
-    var message = 'Download stopped.';
-    if (dlDetails.isDownloadAllowed === 0) {
-      message += ' Blacklisted file name.';
-    }
-    cleanupDownload(gid, message);
+    ariaOnDownloadStop(gid);
   });
 
   ariaTools.setOnDownloadComplete((gid) => {
