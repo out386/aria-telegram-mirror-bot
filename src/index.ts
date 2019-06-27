@@ -200,12 +200,12 @@ function handleDisallowedFilename(dlDetails: details.DlVars, filename: string): 
 function prepDownload(msg: TelegramBot.Message, match: string, isTar: boolean) {
   sendMessage(msg, 'Preparing', -1, statusMessage => {
     ariaTools.addUri(match, (err, gid) => {
+      dlManager.addDownload(gid, msg, statusMessage, isTar);
       if (err) {
         var message = `Failed to start the download. ${err.message}`;
         console.error(message);
         cleanupDownload(gid, message);
       } else {
-        dlManager.addDownload(gid, msg, statusMessage, isTar);
         console.log(`download:${match} gid:${gid}`);
       }
     });
@@ -389,7 +389,7 @@ function cleanupDownload(gid: string, message: string, url?: string) {
   }
   ariaTools.getAriaFilePath(gid, (err, file) => {
     if (err || !file) {
-      console.log('Failed to get the file to delete during cleanup');
+      console.log('Failed to get the file to delete during cleanup\n');
     } else {
       downloadUtils.deleteDownloadedFile(file);
     }
@@ -489,14 +489,22 @@ function initAria2() {
   });
 
   ariaTools.setOnDownloadError((gid) => {
-    console.log('error', gid);
-    var message = 'Download error.';
+    ariaTools.getError(gid, (err, res) => {
+      var message: string;
+      if (err) {
+        message = 'Failed to download.';
+        console.error(`${gid} failed. Failed to get the error message. ${err}`);
+      } else {
+        message = `Failed to download. ${res}`;
+        console.error(`${gid} failed. ${res}`);
+      }
 
-    // Not calling cleanupDownload immediately because if the files download
-    // of a torrent fails, setOnDownloadError sometimes gets called before
-    // onDownloadComplete for the metadata gets called. That means that the gid
-    // change doesn't happen before cleanupDownload gets called.
-    setTimeout(() => cleanupDownload(gid, message), 4000);
+      // Not calling cleanupDownload immediately because if the files download
+      // of a torrent fails, setOnDownloadError sometimes gets called before
+      // onDownloadComplete for the metadata gets called. That means that the gid
+      // change doesn't happen before cleanupDownload gets called.
+      setTimeout(() => cleanupDownload(gid, message), 4000);
+    });
   });
 }
 
