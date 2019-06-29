@@ -121,9 +121,19 @@ This is a description of the fields in src/.constants.js:
 
 After the initial installation, use these instructions to (re)start the bot.
 
+#### Using tmux
+
 1. Start aria2 by running `./aria.sh`
 2. Start a new tmux session with `tmux new -s tgbot`, or connect to an existing session with `tmux a -t tgbot`. Running the bot inside tmux will let you disconnect from the server without terminating the bot. You can also use nohup instead.
 3. Start the bot with `npm start`
+
+#### Using systemd
+
+1. Install the systemd unit file `sudo cp -v contrib/mirror-bot.service /etc/systemd/system/`
+2. Open `/etc/systemd/system/mirror-bot.service` with an editor of your choice and modify the path and user as per your environment.
+3. Reload the systemctl daemon so it can see your new systemd unit `sudo systemctl daemon-reload`
+4. Start the service `sudo systemctl start mirror-bot`
+5. If you want the bot to automatically start on boot, run `sudo systemctl enable mirror-bot`
 
 ### Notifying an external webserver on download completion
 
