@@ -2,15 +2,15 @@
 
 This is a Telegram bot that uses [aria2](https://github.com/aria2/aria2) to download files over BitTorrent / HTTP(S) and uploads them to your Google Drive. This can be useful for downloading from slow servers. There are some features to try to reduce piracy.
 
-### Limitations
+## Limitations
 
 This bot is meant to be used in small, closed groups. So, once deployed, it only works in whitelisted groups. Also, it does not scale, so only one file can be downloaded at a time. This reduces the load on the server running the bot. Download queuing is planned, but not implemented yet.
 
-### Warning
+## Warning
 
 There is very little preventing users from using this to mirror pirated content. Hence, make sure that only trusted groups are whitelisted in `AUTHORIZED_CHATS`.
 
-### Bot commands
+## Bot commands
 
 * `/mirror <url>`: Download from the given URL and upload it to Google Drive. <url> can be HTTP(S), a BitTorrent magnet, or a HTTP(S) url to a BitTorrent .torrent file. A status message will be shown and updated while downloading.
 * `/mirrorTar <url>`: Same as `/mirror`, but archive multiple files into a tar before uploading it.
@@ -18,11 +18,11 @@ There is very little preventing users from using this to mirror pirated content.
 * `/cancelMirror`: Cancel the current mirroring task. Only the person who started the task, SUDO_USERS, and chat admins can use this command.
 * `/list <filename>` : Send links to downloads with the `filename` substring in the name. In case of too many downloads, only show the most recent few. 
 
-### Migrating from v1.0.0
+## Migrating from v1.0.0
 
 Aria-telegram-mirror-bot is now written in TypeScript. If you are migrating from v1.0.0, move your existing `.constants.js` to `src/.constants.js`, and re-read the [installation section](#Installation) and the [section on updating](#Updating), as some steps have changed.
 
-### Pre-installation
+## Pre-installation
 
 1. [Create a new bot](https://core.telegram.org/bots#3-how-do-i-create-a-bot) using Telegram's BotFather and copy your TOKEN.
 
@@ -41,7 +41,7 @@ Aria-telegram-mirror-bot is now written in TypeScript. If you are migrating from
    * Open the folder.
    * The URL will be something like `https://drive.google.com/drive/u/0/folders/012a_345bcdefghijk`. Copy the part after `folders/` (`012a_345bcdefghijk`). This is the `GDRIVE_PARENT_DIR_ID` that you'll need in step 5 of the Installation section.
 
-### Installation
+## Installation
 
 1. Install TypeScript with `sudo npm install -g typescript`
 
@@ -98,7 +98,7 @@ Aria-telegram-mirror-bot is now written in TypeScript. If you are migrating from
 
 That's it.
 
-### Constants description
+## Constants description
 
 This is a description of the fields in src/.constants.js:
 
@@ -117,17 +117,17 @@ This is a description of the fields in src/.constants.js:
    * `port`: The server port ¯\\\_(ツ)\_/¯
    * `path`: The server path ¯\\\_(ツ)\_/¯
 
-### Starting after installation
+## Starting after installation
 
 After the initial installation, use these instructions to (re)start the bot.
 
-#### Using tmux
+### Using tmux
 
 1. Start aria2 by running `./aria.sh`
 2. Start a new tmux session with `tmux new -s tgbot`, or connect to an existing session with `tmux a -t tgbot`. Running the bot inside tmux will let you disconnect from the server without terminating the bot. You can also use nohup instead.
 3. Start the bot with `npm start`
 
-#### Using systemd
+### Using systemd
 
 1. Install the systemd unit file `sudo cp -v contrib/mirror-bot.service /etc/systemd/system/`
 2. Open `/etc/systemd/system/mirror-bot.service` with an editor of your choice and modify the path and user as per your environment.
@@ -135,7 +135,7 @@ After the initial installation, use these instructions to (re)start the bot.
 4. Start the service `sudo systemctl start mirror-bot`
 5. If you want the bot to automatically start on boot, run `sudo systemctl enable mirror-bot`
 
-### Notifying an external webserver on download completion
+## Notifying an external webserver on download completion
 
 This bot can make an HTTP request to an external web server once a download is complete. This can be when a download fails to start, fails to download, is cancelled, or completes successfully. See the section [on constants](#Constants-description) for details on how to configure it.
 
@@ -162,11 +162,11 @@ Your web server should listen for a POST request containing the following JSON d
 
 If `successful` is false, any or all of the fields of `file` might be absent. However, if present, they are correct/reliable.
 
-### Updating
+## Updating
 
 Run `git pull`, then run `tsc`. After compilation has finished, you can start the bot as described in [the above section](#Starting-after-installation).
 
-### License
+## License
 The MIT License (MIT)
 
 Copyright © 2019 out386
