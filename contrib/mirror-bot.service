@@ -1,0 +1,27 @@
+[Unit]
+Description=aria2 mirror Telegram Bot service
+After=network.target
+
+[Service]
+Restart=on-abort
+Type=simple
+User=bots
+WorkingDirectory=/home/bots/aria-telegram-mirror-bot
+ExecStartPre=/usr/bin/env bash aria.sh
+ExecStart=/usr/bin/npm start
+ExecReload=/bin/kill -USR1 $MAINPID
+
+; Use graceful shutdown with a reasonable timeout
+KillMode=mixed
+KillSignal=SIGQUIT
+TimeoutStopSec=5s
+
+; Use private /tmp and /var/tmp, which are discarded after the process stops.
+PrivateTmp=true
+; Use a minimal /dev (May bring additional security if switched to 'true', but it may not work on Raspberry Pi's or other devices, so it has been disabled in this dist.)
+PrivateDevices=true
+; Make /usr, /boot, /etc and possibly some more folders read-only.
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
