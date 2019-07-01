@@ -26,27 +26,27 @@ export function openWebsocket(callback: (err: string) => void) {
     });
 }
 
-export function setOnDownloadStart(callback: (gid: string) => void) {
-  aria2.onDownloadStart = function (keys: any) {
-    callback(keys.gid);
+export function setOnDownloadStart(callback: (gid: string, retry: number) => void) {
+  aria2.onDownloadStart = (keys: any) => {
+    callback(keys.gid, 1);
   };
 }
 
-export function setOnDownloadStop(callback: (gid: string) => void) {
-  aria2.onDownloadStop = function (keys: any) {
-    callback(keys.gid);
+export function setOnDownloadStop(callback: (gid: string, retry: number) => void) {
+  aria2.onDownloadStop = (keys: any) => {
+    callback(keys.gid, 1);
   };
 }
 
-export function setOnDownloadComplete(callback: (gid: string) => void) {
-  aria2.onDownloadComplete = function (keys: any) {
-    callback(keys.gid);
+export function setOnDownloadComplete(callback: (gid: string, retry: number) => void) {
+  aria2.onDownloadComplete = (keys: any) => {
+    callback(keys.gid, 1);
   };
 }
 
-export function setOnDownloadError(callback: (gid: string) => void) {
-  aria2.onDownloadError = function (keys: any) {
-    callback(keys.gid);
+export function setOnDownloadError(callback: (gid: string, retry: number) => void) {
+  aria2.onDownloadError = (keys: any) => {
+    callback(keys.gid, 1);
   };
 }
 

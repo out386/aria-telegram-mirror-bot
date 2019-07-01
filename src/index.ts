@@ -167,7 +167,7 @@ function cancelMirror(dlDetails: details.DlVars, cancelMsg?: TelegramBot.Message
       if (!dlDetails.isDownloading) {
         // onDownloadStopped does not fire for downloads that haven't started yet
         // So calling this here
-        ariaOnDownloadStop(dlDetails.gid);
+        ariaOnDownloadStop(dlDetails.gid, 1);
       }
     });
   }
@@ -379,8 +379,10 @@ function deleteOrigReply(dlDetails: details.DlVars, lastStatusMsg: TelegramBot.M
  * @param message The message to send as the Telegram download complete message
  * @param url The public Google Drive URL for the uploaded file
  */
-function cleanupDownload(gid: string, message: string, url?: string) {
-  var dlDetails = dlManager.getDownloadByGid(gid);
+function cleanupDownload(gid: string, message: string, url?: string, dlDetails?: details.DlVars) {
+  if (!dlDetails) {
+    dlDetails = dlManager.getDownloadByGid(gid);
+  }
   if (dlDetails) {
     sendMessageReplyOriginal(dlDetails, message)
       .then(msg => deleteOrigReply(dlDetails, msg))
@@ -400,35 +402,11 @@ function cleanupDownload(gid: string, message: string, url?: string) {
   }
 }
 
-function ariaOnDownloadStop(gid: string) {
+function ariaOnDownloadStart(gid: string, retry: number) {
   var dlDetails = dlManager.getDownloadByGid(gid);
-  if (!dlDetails) return;  // Can happen only in case of race conditions between stop and download complete, not otherwise
-
-  console.log('stop', gid);
-  var message = 'Download stopped.';
-  if (dlDetails.isDownloadAllowed === 0) {
-    message += ' Blacklisted file name.';
-  }
-  cleanupDownload(gid, message);
-}
-
-function initAria2() {
-  ariaTools.openWebsocket((err) => {
-    if (err) {
-      console.error('A2C: Failed to open websocket. Run aria.sh first. Exiting.');
-      process.exit();
-    } else {
-      websocketOpened = true;
-      console.log('A2C: Websocket opened. Bot ready.');
-    }
-  });
-
-  ariaTools.setOnDownloadStart((gid) => {
-    var dlDetails = dlManager.getDownloadByGid(gid);
-    if (!dlDetails) return;  // Can happen only in case of race conditions between start and stop download, not otherwise
-
+  if (dlDetails) {
     dlManager.moveDownloadToActive(dlDetails);
-    console.log('start', gid);
+    console.log(`Started ${gid}. Dir: ${dlDetails.downloadDir}.`);
     updateStatusMessage(dlDetails, 'Download started.');
 
     ariaTools.getStatus(gid, (err, message, filename) => {
@@ -440,15 +418,36 @@ function initAria2() {
     if (!statusInterval) {
       statusInterval = setInterval(updateAllStatus, 4000);
     }
-  });
+  } else if (retry <= 8) {
+    // OnDownloadStart probably got called before prepDownload's startDownload callback. Fairly common. Retry.
+    console.log(`onDownloadStart: DlDetails empty for ${gid}. ${retry} / 8.`);
+    setTimeout(() => ariaOnDownloadStart(gid, retry + 1), 500);
+  } else {
+    console.error(`onDownloadStart: DlDetails still empty for ${gid}. Giving up.`);
+  }
+}
 
-  ariaTools.setOnDownloadStop((gid) => {
-    ariaOnDownloadStop(gid);
-  });
+function ariaOnDownloadStop(gid: string, retry: number) {
+  var dlDetails = dlManager.getDownloadByGid(gid);
+  if (dlDetails) {
+    console.log('stop', gid);
+    var message = 'Download stopped.';
+    if (dlDetails.isDownloadAllowed === 0) {
+      message += ' Blacklisted file name.';
+    }
+    cleanupDownload(gid, message);
+  } else if (retry <= 8) {
+    // OnDownloadStop probably got called before prepDownload's startDownload callback. Unlikely. Retry.
+    console.log(`onDownloadStop: DlDetails empty for ${gid}. ${retry} / 8.`);
+    setTimeout(() => ariaOnDownloadStop(gid, retry + 1), 500);
+  } else {
+    console.error(`onDownloadStop: DlDetails still empty for ${gid}. Giving up.`);
+  }
+}
 
-  ariaTools.setOnDownloadComplete((gid) => {
-    var dlDetails = dlManager.getDownloadByGid(gid);
-    if (!dlDetails) return;  // Can happen only in case of race conditions between stop and download complete, not otherwise
+function ariaOnDownloadComplete(gid: string, retry: number) {
+  var dlDetails = dlManager.getDownloadByGid(gid);
+  if (dlDetails) {
 
     ariaTools.getAriaFilePath(gid, (err, file) => {
       if (err) {
@@ -494,9 +493,18 @@ function initAria2() {
         });
       }
     });
-  });
+  } else if (retry <= 8) {
+    // OnDownloadComplete probably got called before prepDownload's startDownload callback. Highly unlikely. Retry.
+    console.log(`onDownloadComplete: DlDetails empty for ${gid}. ${retry} / 8.`);
+    setTimeout(() => ariaOnDownloadComplete(gid, retry + 1), 500);
+  } else {
+    console.error(`onDownloadComplete: DlDetails still empty for ${gid}. Giving up.`);
+  }
+}
 
-  ariaTools.setOnDownloadError((gid) => {
+function ariaOnDownloadError(gid: string, retry: number) {
+  var dlDetails = dlManager.getDownloadByGid(gid);
+  if (dlDetails) {
     ariaTools.getError(gid, (err, res) => {
       var message: string;
       if (err) {
@@ -506,14 +514,34 @@ function initAria2() {
         message = `Failed to download. ${res}`;
         console.error(`${gid} failed. ${res}`);
       }
-
-      // Not calling cleanupDownload immediately because if the files download
-      // of a torrent fails, setOnDownloadError sometimes gets called before
-      // onDownloadComplete for the metadata gets called. That means that the gid
-      // change doesn't happen before cleanupDownload gets called.
-      setTimeout(() => cleanupDownload(gid, message), 4000);
+      cleanupDownload(gid, message, null, dlDetails);
     });
+  } else if (retry <= 8) {
+    // OnDownloadError probably got called before prepDownload's startDownload callback,
+    // or gid refers to a torrent files download, and onDownloadComplete for the torrent's
+    // metadata hasn't been called yet. Fairly likely. Retry.
+    console.log(`onDownloadError: DlDetails empty for ${gid}. ${retry} / 8.`);
+    setTimeout(() => ariaOnDownloadError(gid, retry + 1), 500);
+  } else {
+    console.error(`onDownloadError: DlDetails still empty for ${gid}. Giving up.`);
+  }
+}
+
+function initAria2() {
+  ariaTools.openWebsocket((err) => {
+    if (err) {
+      console.error('A2C: Failed to open websocket. Run aria.sh first. Exiting.');
+      process.exit();
+    } else {
+      websocketOpened = true;
+      console.log('A2C: Websocket opened. Bot ready.');
+    }
   });
+
+  ariaTools.setOnDownloadStart(ariaOnDownloadStart);
+  ariaTools.setOnDownloadStop(ariaOnDownloadStop);
+  ariaTools.setOnDownloadComplete(ariaOnDownloadComplete);
+  ariaTools.setOnDownloadError(ariaOnDownloadError);
 }
 
 function driveUploadCompleteCallback(err: string, gid: string, url: string, filePath: string, fileName: string, fileSize: number) {
