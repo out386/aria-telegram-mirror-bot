@@ -84,7 +84,6 @@ function walkSingleDir(path: string, files: string[], parent: string, callback: 
 }
 
 function processFileOrDir(path: string, parent: string, callback: (err: string, fileId?: string) => void) {
-  console.log('processFileOrDir: ' + path);
   fs.stat(path, (err, stat) => {
     if (err) {
       callback(err.message);

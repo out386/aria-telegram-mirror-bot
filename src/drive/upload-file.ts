@@ -113,7 +113,6 @@ export function uploadGoogleDriveFile(parent: string, file: { filePath: string, 
             return reject(new Error(`Get drive resumable url return invalid headers: ${JSON.stringify(response.headers, null, 2)}`));
           }
 
-          console.log(`Uploading file ${fileName} to Google drive.`);
           let chunks = getChunks(file.filePath, 0);
           let fileId = null;
           try {
@@ -130,7 +129,6 @@ export function uploadGoogleDriveFile(parent: string, file: { filePath: string, 
             }
 
             if (fileId && fileId.length > 0) {
-              console.log('Upload complete');
               return resolve(fileId);
             } else {
               return reject(new Error('Uploaded and got invalid id for file ' + fileName));

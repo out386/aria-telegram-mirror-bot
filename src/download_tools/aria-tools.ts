@@ -192,7 +192,6 @@ function driveUploadFile(gid: string, filePath: string, fileName: string, fileSi
   drive.uploadRecursive(filePath,
     constants.GDRIVE_PARENT_DIR_ID,
     (err: string, url: string) => {
-      console.log('uploadFile: deleting');
       callback(err, gid, url, filePath, fileName, fileSize);
     });
 }

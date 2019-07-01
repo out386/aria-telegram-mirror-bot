@@ -398,7 +398,7 @@ function cleanupDownload(gid: string, message: string, url?: string, dlDetails?:
     downloadUtils.deleteDownloadedFile(dlDetails.downloadDir);
   } else {
     // Why is this message so calm? We should be SCREAMING at this point!
-    console.error(`Could not get dlDetails for ${gid}`);
+    console.error(`cleanupDownload: Could not get dlDetails for ${gid}`);
   }
 }
 
@@ -451,7 +451,7 @@ function ariaOnDownloadComplete(gid: string, retry: number) {
 
     ariaTools.getAriaFilePath(gid, (err, file) => {
       if (err) {
-        console.log(`onDownloadComplete: ${err}`);
+        console.error(`onDownloadComplete: Error getting file path for ${gid}. ${err}`);
         var message = 'Upload failed. Could not get downloaded files.';
         cleanupDownload(gid, message);
         return;
@@ -460,7 +460,7 @@ function ariaOnDownloadComplete(gid: string, retry: number) {
       if (file) {
         ariaTools.getFileSize(gid, (err, size) => {
           if (err) {
-            console.log(`onDownloadComplete: ${err}`);
+            console.error(`onDownloadComplete: Error getting file size for ${gid}. ${err}`);
             var message = 'Upload failed. Could not get file size.';
             cleanupDownload(gid, message);
             return;
@@ -469,24 +469,25 @@ function ariaOnDownloadComplete(gid: string, retry: number) {
           var filename = filenameUtils.getFileNameFromPath(file, null);
           dlDetails.isUploading = true;
           if (handleDisallowedFilename(dlDetails, filename)) {
-            console.log('onDownloadComplete: ' + file);
+            console.log(`${gid} complete. Filename: ${filename}. Starting upload.`);
             ariaTools.uploadFile(dlDetails, file, size, driveUploadCompleteCallback);
           } else {
             var reason = 'Upload failed. Blacklisted file name.';
+            console.log(`${gid} blacklisted. Filename: ${filename}.`);
             cleanupDownload(gid, reason);
           }
         });
       } else {
         ariaTools.isDownloadMetadata(gid, (err, isMetadata, newGid) => {
           if (err) {
-            console.log(`onDownloadComplete: isMetadata: ${err}`);
+            console.error(`onDownloadComplete: Failed to check if ${gid} was a metadata download: ${err}`);
             var message = 'Upload failed. Could not check if the file is metadata.';
             cleanupDownload(gid, message);
           } else if (isMetadata) {
-            console.log(`onDownloadComplete: Changing GID from ${gid} to ${newGid}`);
+            console.log(`Changing GID from ${gid} to ${newGid}`);
             dlManager.changeDownloadGid(gid, newGid);
           } else {
-            console.log('onDownloadComplete: No files - not metadata.');
+            console.error('onDownloadComplete: No files - not metadata.');
             var reason = 'Upload failed. Could not get files.';
             cleanupDownload(gid, reason);
           }
@@ -548,10 +549,11 @@ function driveUploadCompleteCallback(err: string, gid: string, url: string, file
   var finalMessage;
   if (err) {
     var message = err;
-    console.log(`uploadFile: ${filePath}: ${message}`);
+    console.error(`uploadFile: Failed to upload ${gid} - ${filePath}: ${message}`);
     finalMessage = `Failed to upload <code>${fileName}</code> to Drive.${message}`;
     cleanupDownload(gid, finalMessage);
   } else {
+    console.log(`Uploaded ${gid}`);
     if (fileSize) {
       var fileSizeStr = downloadUtils.formatSize(fileSize);
       finalMessage = `<a href='${url}'>${fileName}</a> (${fileSizeStr})`;
