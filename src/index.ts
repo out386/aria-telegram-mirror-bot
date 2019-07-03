@@ -16,7 +16,7 @@ var dlManager = dlm.DlManager.getInstance();
 
 initAria2();
 
-bot.on("polling_error", msg => console.log(msg.message));
+bot.on("polling_error", msg => console.error(msg.message));
 
 bot.onText(/^\/start/, (msg) => {
   if (msgTools.isAuthorized(msg) < 0) {
@@ -287,7 +287,9 @@ function sendMessage(msg: TelegramBot.Message, text: string, delay?: number,
         }
       }
     })
-    .catch((ignored) => { });
+    .catch((err) => {
+      console.error(`sendMessage error: ${err.message}`);
+    });
 }
 
 function sendUnauthorizedMessage(msg: TelegramBot.Message) {
@@ -298,7 +300,7 @@ function sendMessageReplyOriginal(dlDetails: details.DlVars, message: string): P
   return bot.sendMessage(dlDetails.tgChatId, message, {
     reply_to_message_id: dlDetails.tgMessageId,
     parse_mode: 'HTML'
-  })
+  });
 }
 
 /**
@@ -405,7 +407,9 @@ function editMessage(msg: TelegramBot.Message, text: string) {
       message_id: msg.message_id,
       parse_mode: 'HTML'
     })
-      .catch(ignored => { });
+      .catch(err => {
+        console.log(`editMessage error: ${err.message}`);
+      });
   }
 }
 
@@ -435,7 +439,9 @@ function cleanupDownload(gid: string, message: string, url?: string, dlDetails?:
   if (dlDetails) {
     sendMessageReplyOriginal(dlDetails, message)
       .then(msg => deleteOrigReply(dlDetails, msg))
-      .catch();
+      .catch((err) => {
+        console.error(`cleanupDownload sendMessage error: ${err.message}`);
+      });
     updateStatusMessage(dlDetails, message);
     if (url) {
       msgTools.notifyExternal(true, gid, dlDetails.tgChatId, url);

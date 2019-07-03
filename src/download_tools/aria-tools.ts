@@ -78,7 +78,6 @@ export function getStatus(gid: string, callback: (err: string, message: string, 
     (err: any, res: any) => {
       if (err) {
         callback(err.message, null, null, null);
-        console.log(`getStatus - ${gid}: ${err.message}`);
       } else if (res.status === 'active') {
         var statusMessage = downloadUtils.generateStatusMessage(parseFloat(res.totalLength),
           parseFloat(res.completedLength),
