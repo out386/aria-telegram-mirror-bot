@@ -16,11 +16,11 @@ export function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function isAuthorized(msg: TelegramBot.Message) {
+export function isAuthorized(msg: TelegramBot.Message, skipDlOwner ?: boolean) {
   for (var i = 0; i < constants.SUDO_USERS.length; i++) {
     if (constants.SUDO_USERS[i] === msg.from.id) return 0;
   }
-  if (msg.reply_to_message) {
+  if (!skipDlOwner && msg.reply_to_message) {
     var dlDetails = dlManager.getDownloadByMsgId(msg.reply_to_message);
     if (dlDetails && msg.from.id === dlDetails.tgFromId) return 1;
   }

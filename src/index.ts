@@ -149,11 +149,59 @@ bot.onText(/^\/cancelMirror/i, (msg) => {
   }
 });
 
-function cancelMirror(dlDetails: details.DlVars, cancelMsg?: TelegramBot.Message) {
+bot.onText(/^\/cancelAll/i, (msg) => {
+  var authorizedCode = msgTools.isAuthorized(msg, true);
+  var count = 0;
+  if (authorizedCode === 0) {
+    // One of SUDO_USERS. Cancel all downloads
+    dlManager.forEachDownload(dlDetails => {
+      if (cancelMirror(dlDetails)) {
+        count++;
+      }
+    });
+
+  } else if (authorizedCode === 2) {
+    // Chat admin, but not sudo. Cancel all downloads from that chat.
+    count = cancelMirrorForChat(msg.chat.id);
+  } else if (authorizedCode === 3) {
+    msgTools.isAdmin(bot, msg, (e, res) => {
+      if (res) {
+        count = cancelMirrorForChat(msg.chat.id);
+      } else {
+        sendMessage(msg, 'You do not have permission to do that.');
+        return;
+      }
+    });
+  } else {
+    sendMessage(msg, 'You cannot use this bot here.');
+    return;
+  }
+
+  if (count > 0) {
+    sendMessage(msg, `${count} downloads cancelled.`, 30000);
+  } else {
+    sendMessage(msg, 'No downloads to cancel');
+  }
+});
+
+function cancelMirrorForChat(chatId: number): number {
+  var count = 0;
+  dlManager.forEachDownload(dlDetails => {
+    if (dlDetails.tgChatId === chatId) {
+      if (cancelMirror(dlDetails)) {
+        count++;
+      }
+    }
+  });
+  return count;
+}
+
+function cancelMirror(dlDetails: details.DlVars, cancelMsg?: TelegramBot.Message): boolean {
   if (dlDetails.isUploading) {
     if (cancelMsg) {
       sendMessage(cancelMsg, 'Upload in progress. Cannot cancel.');
     }
+    return false;
   } else {
     ariaTools.stopDownload(dlDetails.gid, () => {
       // Not sending a message here, because a cancel will fire
@@ -171,6 +219,7 @@ function cancelMirror(dlDetails: details.DlVars, cancelMsg?: TelegramBot.Message
       }
     });
   }
+  return true;
 }
 
 /**
