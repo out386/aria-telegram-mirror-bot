@@ -455,7 +455,8 @@ function ariaOnDownloadStart(gid: string, retry: number) {
     });
 
     if (!statusInterval) {
-      statusInterval = setInterval(updateAllStatus, 4000);
+      statusInterval = setInterval(updateAllStatus,
+        constants.STATUS_UPDATE_INTERVAL_MS ? constants.STATUS_UPDATE_INTERVAL_MS : 12000);
     }
   } else if (retry <= 8) {
     // OnDownloadStart probably got called before prepDownload's startDownload callback. Fairly common. Retry.

@@ -110,6 +110,7 @@ This is a description of the fields in src/.constants.js:
 * `GDRIVE_PARENT_DIR_ID`: This is the ID of the Google Drive folder that files will be uploaded into. You will get this from step 4 of Pre-installation.
 * `SUDO_USERS`: This is a list of Telegram user IDs. These users can use the bot in any chat. Can be an empty list, if AUTHORIZED_CHATS is not empty.
 * `AUTHORIZED_CHATS`: This is a list of Telegram Chat IDs. Anyone in these chats can use the bot in that particular chat. Anyone not in one of these chats and not in SUDO_USERS cannot use the bot. Someone in one of the chats in this list can use the bot only in that chat, not elsewhere. Can be an empty list, if SUDO_USERS is not empty.
+* `STATUS_UPDATE_INTERVAL_MS`: Set the time in milliseconds between status updates. A smaller number will update status messages faster, but Telegram will rate limit the bot if it sends/edits more than around 20 messages/minute/chat. As that quota includes messages other than status updates, do not decrease this number if you get rate limit messages in the logs.
 * `DOWNLOAD_NOTIFY_TARGET`: The fields here are used to notify an external web server once a download is complete. See the [section on notifications below](#Notifying-an-external-webserver-on-download-completion) for details.
    * `enabled`: Set this to `true` to enable this feature.
    * `host`: The address of the web server to notify.
