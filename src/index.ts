@@ -70,7 +70,7 @@ bot.onText(/^\/mirrorStatus/i, (msg) => {
 });
 
 function getSingleStatus(dlDetails: details.DlVars, msg?: TelegramBot.Message): Promise<string> {
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     var authorizedCode;
     if (msg) {
       authorizedCode = msgTools.isAuthorized(msg);
@@ -81,7 +81,7 @@ function getSingleStatus(dlDetails: details.DlVars, msg?: TelegramBot.Message): 
     if (authorizedCode > -1) {
       ariaTools.getStatus(dlDetails.gid, (err, message, filename) => {
         if (err) {
-          reject(`Error: ${dlDetails.gid} - ${err}`);
+          resolve(`Error: ${dlDetails.gid} - ${err}`);
         } else {
           if (dlDetails.isUploading) {
             resolve(`<i>${filename}</i> - Uploading`);
@@ -92,7 +92,7 @@ function getSingleStatus(dlDetails: details.DlVars, msg?: TelegramBot.Message): 
         }
       });
     } else {
-      reject(`You aren't authorized to use this bot here.`);
+      resolve(`You aren't authorized to use this bot here.`);
     }
   });
 }
@@ -263,7 +263,9 @@ function prepDownload(msg: TelegramBot.Message, match: string, isTar: boolean) {
     } else {
       console.log(`download:${match} gid:${gid}`);
       // Wait a second to give aria2 enough time to queue the download
-      setTimeout(() => sendStatusMessage(msg, true), 1000);
+      setTimeout(() => {
+        dlManager.setStatusLock(msg, sendStatusMessage);
+      }, 1000);
     }
   });
 
@@ -303,36 +305,49 @@ function sendMessageReplyOriginal(dlDetails: details.DlVars, message: string): P
   });
 }
 
+interface StatusPromise {
+  message: string;
+  totalDownloadCount: number;
+}
+
 /**
  * Get a single status message for all active and queued downloads.
  */
-function getStatusMessage(callback: (err: string, message: string, totalDownloadCount: number) => void) {
+function getStatusMessage(): Promise<StatusPromise> {
   var singleStatusArr: Promise<string>[] = [];
 
   dlManager.forEachDownload(dlDetails => {
     singleStatusArr.push(getSingleStatus(dlDetails));
   });
 
-  Promise.all(singleStatusArr)
+  var result: Promise<StatusPromise> = Promise.all(singleStatusArr)
     .then(statusArr => {
       if (statusArr && statusArr.length > 0) {
-        callback(null, statusArr.reduce((prev, curr, i) => {
+        var message = statusArr.reduce((prev, curr, i) => {
           return i > 0 ? `${prev}\n\n${curr}` : `${curr}`;
-        }), statusArr.length);
+        });
+        return {
+          message: message,
+          totalDownloadCount: statusArr.length
+        };
       } else {
-        callback(null, 'No active or queued downloads', 0);
+        return {
+          message: 'No active or queued downloads',
+          totalDownloadCount: 0
+        };
       }
     })
     .catch(error => {
       console.log(`getStatusMessage: ${error}`);
-      callback(error, null, 1);
-    })
+      return error;
+    });
+  return result;
 }
 
 /**
  * Sends a single status message for all active and queued downloads.
  */
-function sendStatusMessage(msg: TelegramBot.Message, keepForever?: boolean) {
+function sendStatusMessage(msg: TelegramBot.Message, keepForever?: boolean): Promise<any> {
   var lastStatus = dlManager.getStatus(msg.chat.id);
 
   if (lastStatus) {
@@ -340,17 +355,22 @@ function sendStatusMessage(msg: TelegramBot.Message, keepForever?: boolean) {
     dlManager.deleteStatus(msg.chat.id);
   }
 
-  getStatusMessage((err, messageText) => {
-    var finalMessage = err ? err : messageText;
-    if (keepForever) {
-      sendMessage(msg, finalMessage, -1, message => {
-        dlManager.addStatus(message);
-      });
-    } else {
-      sendMessage(msg, finalMessage, 60000, message => {
-        dlManager.addStatus(message);
-      }, true);
-    }
+  return new Promise(resolve => {
+    getStatusMessage()
+      .then(res => {
+        if (keepForever) {
+          sendMessage(msg, res.message, -1, message => {
+            dlManager.addStatus(message);
+            resolve();
+          });
+        } else {
+          sendMessage(msg, res.message, 60000, message => {
+            dlManager.addStatus(message);
+            resolve();
+          }, true);
+        }
+      })
+      .catch(resolve);
   });
 }
 
@@ -358,19 +378,19 @@ function sendStatusMessage(msg: TelegramBot.Message, keepForever?: boolean) {
  * Updates all status messages
  */
 function updateAllStatus() {
-  getStatusMessage((err, messageText, totalDownloadCount) => {
-    var finalMessage = err ? err : messageText;
-    dlManager.forEachStatus(statusMessage => {
-      editMessage(statusMessage, finalMessage);
-    });
+  getStatusMessage()
+    .then(res => {
+      dlManager.forEachStatus(statusMessage => {
+        editMessage(statusMessage, res.message);
+      });
 
-    if (totalDownloadCount === 0) {
-      // No more active or queued downloads, let's stop the status refresh timer
-      clearInterval(statusInterval);
-      statusInterval = null;
-      deleteAllStatus();
-    }
-  });
+      if (res.totalDownloadCount === 0) {
+        // No more active or queued downloads, let's stop the status refresh timer
+        clearInterval(statusInterval);
+        statusInterval = null;
+        deleteAllStatus();
+      }
+    }).catch();
 }
 
 function deleteAllStatus() {

@@ -14,6 +14,7 @@ export class DlManager {
    * Value: Status message: TelegramBot.Message
    */
   private statusAll: any = {};
+  private statusLock: any = {};
 
   private constructor() {
   }
@@ -121,4 +122,19 @@ export class DlManager {
     }
   }
 
+  /**
+   * Prevents race conditions when multiple status messages are sent in a short time.
+   * Makes sure that a status message has been properly sent before allowing the next one.
+   * @param msg The Telegram message that caused this status update
+   * @param toCall The function to call to perform the status update
+   */
+  setStatusLock(msg: TelegramBot.Message, toCall: (msg: TelegramBot.Message, keep: boolean) => Promise<any>) {
+    if (!this.statusLock[msg.chat.id]) {
+      this.statusLock[msg.chat.id] = Promise.resolve();
+    }
+
+    this.statusLock[msg.chat.id] = this.statusLock[msg.chat.id].then(() => {
+      return toCall(msg, true);
+    });
+  }
 }
