@@ -140,12 +140,11 @@ bot.onText(/^\/cancelMirror/i, (msg) => {
         sendMessage(msg, 'You cannot use this bot here.');
       }
     } else {
-      sendMessage(msg, `Reply to the command message, or the bot's download confirmation message` +
-        ` for the download that you want to cancel. Also make sure that the download even active.`);
+      sendMessage(msg, `Reply to the command message for the download that you want to cancel.` +
+        ` Also make sure that the download is even active.`);
     }
   } else {
-    sendMessage(msg, `Reply to the command message, or the bot's download confirmation message` +
-      ` for the download that you want to cancel.`);
+    sendMessage(msg, `Reply to the command message for the download that you want to cancel.`);
   }
 });
 

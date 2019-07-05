@@ -15,7 +15,8 @@ There is very little preventing users from using this to mirror pirated content.
 * `/mirror <url>`: Download from the given URL and upload it to Google Drive. <url> can be HTTP(S), a BitTorrent magnet, or a HTTP(S) url to a BitTorrent .torrent file. A status message will be shown and updated while downloading.
 * `/mirrorTar <url>`: Same as `/mirror`, but archive multiple files into a tar before uploading it.
 * `/mirrorStatus`: Send a status message about all active and queued downloads.
-* `/cancelMirror`: Cancel a particular mirroring task. To use this, send it as a reply to the message that started the download that you want to cancel, or to the message that the bot replied to it with. Only the person who started the task, SUDO_USERS, and chat admins can use this command.
+* `/cancelMirror`: Cancel a particular mirroring task. To use this, send it as a reply to the message that started the download that you want to cancel. Only the person who started the task, SUDO_USERS, and chat admins can use this command.
+* `/cancelAll`: Cancel all mirroring tasks in all chats if a [SUDO_USERS](#Constants-description) member uses it, or cancel all mirroring tasks for a particular chat if one of that chat's admins use it. No one else can use this command.
 * `/list <filename>` : Send links to downloads with the `filename` substring in the name. In case of too many downloads, only show the most recent few. 
 
 ## Migrating from v1.0.0
