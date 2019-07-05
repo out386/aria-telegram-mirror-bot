@@ -7,16 +7,13 @@ export class DlVars {
   readonly tgUsername: string;
   readonly tgChatId: number;
   readonly tgMessageId: number;
-  readonly tgStatusMessageId: number;
-  readonly origStatusMsg: TelegramBot.Message;
   /**
    * A subdirectory of 'constants.ARIA_DOWNLOAD_LOCATION.length', where this download
    * will be downloaded. This directory should always have a 36 character name.
    */
   readonly downloadDir: string;
 
-  constructor(public gid: string, msg: TelegramBot.Message, statusMsg: TelegramBot.Message,
-    readonly isTar: boolean, downloadDir: string) {
+  constructor(public gid: string, msg: TelegramBot.Message, readonly isTar: boolean, downloadDir: string) {
     var username: string;
     if (msg.from.username) {
       username = '@' + msg.from.username;
@@ -29,7 +26,5 @@ export class DlVars {
     this.tgUsername = username;
     this.tgChatId = msg.chat.id;
     this.tgMessageId = msg.message_id;
-    this.tgStatusMessageId = statusMsg.message_id;
-    this.origStatusMsg = statusMsg;
   }
 }

@@ -25,8 +25,8 @@ export class DlManager {
     return DlManager.instance;
   }
 
-  addDownload(gid: string, dlDir: string, msg: TelegramBot.Message, statusMsg: TelegramBot.Message, isTar: boolean) {
-    var detail = new dlDetails.DlVars(gid, msg, statusMsg, isTar, dlDir);
+  addDownload(gid: string, dlDir: string, msg: TelegramBot.Message, isTar: boolean) {
+    var detail = new dlDetails.DlVars(gid, msg, isTar, dlDir);
     this.allDls[gid] = detail;
   }
 
@@ -64,13 +64,13 @@ export class DlManager {
   /**
    * Gets a download by the download command message, or the original reply
    * to the download command message.
-   * @param msg The download command message, or the original status message
+   * @param msg The download command message
    */
   getDownloadByMsgId(msg: TelegramBot.Message): dlDetails.DlVars {
     for (var dl of Object.keys(this.allDls)) {
       var download: dlDetails.DlVars = this.allDls[dl];
       if (download.tgChatId === msg.chat.id &&
-        (download.tgMessageId === msg.message_id || download.tgStatusMessageId === msg.message_id)) {
+        (download.tgMessageId === msg.message_id)) {
         return download;
       }
     }
