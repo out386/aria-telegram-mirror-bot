@@ -4,6 +4,7 @@ import fs = require('fs');
 export function archive(srcPath: string, destName: string, callback: (err: string, size: number) => void) {
   var dlDirPath = srcPath.substring(0, srcPath.lastIndexOf('/'));
   var writeStream = fs.createWriteStream(`${dlDirPath}/${destName}`);
+  var targetDirName = `${srcPath.substring(srcPath.lastIndexOf('/') + 1)}`;
   var size = 0;
   writeStream.on('close', () => callback(null, size));
   writeStream.on('error', (err) => callback(err, size));
@@ -15,7 +16,7 @@ export function archive(srcPath: string, destName: string, callback: (err: strin
       jobs: 1,
       cwd: dlDirPath
     },
-    [srcPath]
+    [targetDirName]
   );
 
   stream.on('error', (err: string) => callback(err, size));
