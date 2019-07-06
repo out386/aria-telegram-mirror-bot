@@ -22,7 +22,7 @@ bot.onText(/^\/start/, (msg) => {
   if (msgTools.isAuthorized(msg) < 0) {
     sendUnauthorizedMessage(msg);
   } else {
-    sendMessage(msg, 'You should know the commands already. Happy mirroring.');
+    sendMessage(msg, 'You should know the commands already. Happy mirroring.', -1);
   }
 });
 
