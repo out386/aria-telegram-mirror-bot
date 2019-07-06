@@ -363,8 +363,12 @@ function sendStatusMessage(msg: TelegramBot.Message, keepForever?: boolean): Pro
             resolve();
           });
         } else {
-          sendMessage(msg, res.message, 60000, message => {
+          var ttl = 60000;
+          sendMessage(msg, res.message, ttl, message => {
             dlManager.addStatus(message);
+            setTimeout(() => {
+              dlManager.deleteStatus(msg.chat.id);
+            }, ttl);
             resolve();
           }, true);
         }
@@ -379,8 +383,15 @@ function sendStatusMessage(msg: TelegramBot.Message, keepForever?: boolean): Pro
 function updateAllStatus() {
   getStatusMessage()
     .then(res => {
+      var staleStatusReply = 'ETELEGRAM: 400 Bad Request: message to edit not found';
+
       dlManager.forEachStatus(statusMessage => {
-        editMessage(statusMessage, res.message);
+        editMessage(statusMessage, res.message, staleStatusReply)
+          .catch(err => {
+            if (err.message === staleStatusReply) {
+              dlManager.deleteStatus(statusMessage.chat.id);
+            }
+          })
       });
 
       if (res.totalDownloadCount === 0) {
@@ -395,20 +406,29 @@ function updateAllStatus() {
 function deleteAllStatus() {
   dlManager.forEachStatus(statusMessage => {
     msgTools.deleteMsg(bot, statusMessage, 10000);
+    dlManager.deleteStatus(statusMessage.chat.id);
   });
 }
 
-function editMessage(msg: TelegramBot.Message, text: string) {
-  if (msg && msg.chat && msg.chat.id && msg.message_id) {
-    bot.editMessageText(text, {
-      chat_id: msg.chat.id,
-      message_id: msg.message_id,
-      parse_mode: 'HTML'
-    })
-      .catch(err => {
-        console.log(`editMessage error: ${err.message}`);
-      });
-  }
+function editMessage(msg: TelegramBot.Message, text: string, suppressError?: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    if (msg && msg.chat && msg.chat.id && msg.message_id) {
+      bot.editMessageText(text, {
+        chat_id: msg.chat.id,
+        message_id: msg.message_id,
+        parse_mode: 'HTML'
+      })
+        .then(resolve)
+        .catch(err => {
+          if (err.message !== suppressError) {
+            console.log(`editMessage error: ${err.message}`);
+          }
+          reject(err);
+        });
+    } else {
+      resolve();
+    }
+  });
 }
 
 /**
