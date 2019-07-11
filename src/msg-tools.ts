@@ -2,6 +2,7 @@ import constants = require('./.constants');
 import http = require('http');
 import ariaTools = require('./download_tools/aria-tools');
 import TelegramBot = require('node-telegram-bot-api');
+import details = require('./dl_model/detail');
 import dlm = require('./dl_model/dl-manager');
 var dlManager = dlm.DlManager.getInstance();
 
@@ -12,11 +13,66 @@ export async function deleteMsg(bot: TelegramBot, msg: TelegramBot.Message, dela
     .catch(ignored => { });
 }
 
+export function editMessage(bot: TelegramBot, msg: TelegramBot.Message, text: string, suppressError?: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    if (msg && msg.chat && msg.chat.id && msg.message_id) {
+      bot.editMessageText(text, {
+        chat_id: msg.chat.id,
+        message_id: msg.message_id,
+        parse_mode: 'HTML'
+      })
+        .then(resolve)
+        .catch(err => {
+          if (err.message !== suppressError) {
+            console.log(`editMessage error: ${err.message}`);
+          }
+          reject(err);
+        });
+    } else {
+      resolve();
+    }
+  });
+}
+
+export function sendMessage(bot: TelegramBot, msg: TelegramBot.Message, text: string, delay?: number,
+  callback?: (res: TelegramBot.Message) => void, quickDeleteOriginal?: boolean) {
+  if (!delay) delay = 5000;
+  bot.sendMessage(msg.chat.id, text, {
+    reply_to_message_id: msg.message_id,
+    parse_mode: 'HTML'
+  })
+    .then((res) => {
+      if (callback) callback(res);
+      if (delay > -1) {
+        deleteMsg(bot, res, delay);
+        if (quickDeleteOriginal) {
+          deleteMsg(bot, msg);
+        } else {
+          deleteMsg(bot, msg, delay);
+        }
+      }
+    })
+    .catch((err) => {
+      console.error(`sendMessage error: ${err.message}`);
+    });
+}
+
+export function sendUnauthorizedMessage(bot: TelegramBot, msg: TelegramBot.Message) {
+  sendMessage(bot, msg, `You aren't authorized to use this bot here.`);
+}
+
+export function sendMessageReplyOriginal(bot: TelegramBot, dlDetails: details.DlVars, message: string): Promise<TelegramBot.Message> {
+  return bot.sendMessage(dlDetails.tgChatId, message, {
+    reply_to_message_id: dlDetails.tgMessageId,
+    parse_mode: 'HTML'
+  });
+}
+
 export function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function isAuthorized(msg: TelegramBot.Message, skipDlOwner ?: boolean) {
+export function isAuthorized(msg: TelegramBot.Message, skipDlOwner?: boolean) {
   for (var i = 0; i < constants.SUDO_USERS.length; i++) {
     if (constants.SUDO_USERS[i] === msg.from.id) return 0;
   }

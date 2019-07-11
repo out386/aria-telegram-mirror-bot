@@ -1,6 +1,12 @@
 import fs = require('fs-extra');
 import filenameUtils = require('./filename-utils');
 import constants = require('../.constants');
+import ariaTools = require('./aria-tools.js');
+import msgTools = require('../msg-tools.js');
+import TelegramBot = require('node-telegram-bot-api');
+import details = require('../dl_model/detail');
+import dlm = require('../dl_model/dl-manager');
+var dlManager = dlm.DlManager.getInstance();
 
 const PROGRESS_MAX_SIZE = Math.floor(100 / 8);
 const PROGRESS_INCOMPLETE = ['▏', '▎', '▍', '▌', '▋', '▊', '▉'];
@@ -34,6 +40,93 @@ function downloadETA(totalLength: number, completedLength: number, speed: number
   }
 }
 
+interface StatusSingle {
+  message: string;
+  filename?: string;
+  dlDetails?: details.DlVars;
+}
+
+function getSingleStatus(dlDetails: details.DlVars, msg?: TelegramBot.Message): Promise<StatusSingle> {
+  return new Promise(resolve => {
+    var authorizedCode;
+    if (msg) {
+      authorizedCode = msgTools.isAuthorized(msg);
+    } else {
+      authorizedCode = 1;
+    }
+
+    if (authorizedCode > -1) {
+      ariaTools.getStatus(dlDetails.gid, (err, message, filename) => {
+        if (err) {
+          resolve({
+            message: `Error: ${dlDetails.gid} - ${err}`
+          });
+        } else {
+          if (dlDetails.isUploading) {
+            resolve({
+              message: `<i>${filename}</i> - Uploading`
+            });
+          } else {
+            resolve({
+              message: message,
+              filename: filename,
+              dlDetails: dlDetails
+            });
+          }
+        }
+      });
+    } else {
+      resolve({ message: `You aren't authorized to use this bot here.` });
+    }
+  });
+}
+
+interface StatusAll {
+  message: string;
+  totalDownloadCount: number;
+  singleStatuses?: StatusSingle[];
+}
+
+/**
+ * Get a single status message for all active and queued downloads.
+ */
+export function getStatusMessage(): Promise<StatusAll> {
+  var singleStatusArr: Promise<StatusSingle>[] = [];
+
+  dlManager.forEachDownload(dlDetails => {
+    singleStatusArr.push(getSingleStatus(dlDetails));
+  });
+
+  var result: Promise<StatusAll> = Promise.all(singleStatusArr)
+    .then(statusArr => {
+      if (statusArr && statusArr.length > 0) {
+        var message: string;
+        statusArr.forEach((value, index) => {
+          if (index > 0) {
+            message = `${message}\n\n${value.message}`;
+          } else {
+            message = value.message;
+          }
+        });
+
+        return {
+          message: message,
+          totalDownloadCount: statusArr.length,
+          singleStatuses: statusArr
+        };
+      } else {
+        return {
+          message: 'No active or queued downloads',
+          totalDownloadCount: 0
+        };
+      }
+    })
+    .catch(error => {
+      console.log(`getStatusMessage: ${error}`);
+      return error;
+    });
+  return result;
+}
 
 /**
  * Generates a human-readable message for the status of the given download

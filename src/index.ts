@@ -20,15 +20,15 @@ bot.on("polling_error", msg => console.error(msg.message));
 
 bot.onText(/^\/start/, (msg) => {
   if (msgTools.isAuthorized(msg) < 0) {
-    sendUnauthorizedMessage(msg);
+    msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
-    sendMessage(msg, 'You should know the commands already. Happy mirroring.', -1);
+    msgTools.sendMessage(bot, msg, 'You should know the commands already. Happy mirroring.', -1);
   }
 });
 
 bot.onText(/^\/mirrortar (.+)/i, (msg, match) => {
   if (msgTools.isAuthorized(msg) < 0) {
-    sendUnauthorizedMessage(msg);
+    msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
     mirror(msg, match, true);
   }
@@ -36,7 +36,7 @@ bot.onText(/^\/mirrortar (.+)/i, (msg, match) => {
 
 bot.onText(/^\/mirror (.+)/i, (msg, match) => {
   if (msgTools.isAuthorized(msg) < 0) {
-    sendUnauthorizedMessage(msg);
+    msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
     mirror(msg, match);
   }
@@ -54,58 +54,30 @@ function mirror(msg: TelegramBot.Message, match: RegExpExecArray, isTar?: boolea
     if (downloadUtils.isDownloadAllowed(match[1])) {
       prepDownload(msg, match[1], isTar);
     } else {
-      sendMessage(msg, `Download failed. Blacklisted URL.`);
+      msgTools.sendMessage(bot, msg, `Download failed. Blacklisted URL.`);
     }
   } else {
-    sendMessage(msg, `Websocket isn't open. Can't download`);
+    msgTools.sendMessage(bot, msg, `Websocket isn't open. Can't download`);
   }
 }
 
 bot.onText(/^\/mirrorStatus/i, (msg) => {
   if (msgTools.isAuthorized(msg) < 0) {
-    sendUnauthorizedMessage(msg);
+    msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
     sendStatusMessage(msg);
   }
 });
 
-function getSingleStatus(dlDetails: details.DlVars, msg?: TelegramBot.Message): Promise<string> {
-  return new Promise(resolve => {
-    var authorizedCode;
-    if (msg) {
-      authorizedCode = msgTools.isAuthorized(msg);
-    } else {
-      authorizedCode = 1;
-    }
-
-    if (authorizedCode > -1) {
-      ariaTools.getStatus(dlDetails.gid, (err, message, filename) => {
-        if (err) {
-          resolve(`Error: ${dlDetails.gid} - ${err}`);
-        } else {
-          if (dlDetails.isUploading) {
-            resolve(`<i>${filename}</i> - Uploading`);
-          } else {
-            handleDisallowedFilename(dlDetails, filename);
-            resolve(message);
-          }
-        }
-      });
-    } else {
-      resolve(`You aren't authorized to use this bot here.`);
-    }
-  });
-}
-
 bot.onText(/^\/list (.+)/i, (msg, match) => {
   if (msgTools.isAuthorized(msg) < 0) {
-    sendUnauthorizedMessage(msg);
+    msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
     driveList.listFiles(match[1], (err, res) => {
       if (err) {
-        sendMessage(msg, 'Failed to fetch the list of files');
+        msgTools.sendMessage(bot, msg, 'Failed to fetch the list of files');
       } else {
-        sendMessage(msg, res, 60000);
+        msgTools.sendMessage(bot, msg, res, 60000);
       }
     });
   }
@@ -113,9 +85,9 @@ bot.onText(/^\/list (.+)/i, (msg, match) => {
 
 bot.onText(/^\/getFolder/i, (msg) => {
   if (msgTools.isAuthorized(msg) < 0) {
-    sendUnauthorizedMessage(msg);
+    msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
-    sendMessage(msg,
+    msgTools.sendMessage(bot, msg,
       '<a href = \'' + driveUtils.getFileLink(constants.GDRIVE_PARENT_DIR_ID, true) + '\'>Drive mirror folder</a>',
       60000);
   }
@@ -133,18 +105,18 @@ bot.onText(/^\/cancelMirror/i, (msg) => {
           if (res) {
             cancelMirror(dlDetails, msg);
           } else {
-            sendMessage(msg, 'You do not have permission to do that.');
+            msgTools.sendMessage(bot, msg, 'You do not have permission to do that.');
           }
         });
       } else {
-        sendMessage(msg, 'You cannot use this bot here.');
+        msgTools.sendUnauthorizedMessage(bot, msg);
       }
     } else {
-      sendMessage(msg, `Reply to the command message for the download that you want to cancel.` +
+      msgTools.sendMessage(bot, msg, `Reply to the command message for the download that you want to cancel.` +
         ` Also make sure that the download is even active.`);
     }
   } else {
-    sendMessage(msg, `Reply to the command message for the download that you want to cancel.`);
+    msgTools.sendMessage(bot, msg, `Reply to the command message for the download that you want to cancel.`);
   }
 });
 
@@ -167,19 +139,19 @@ bot.onText(/^\/cancelAll/i, (msg) => {
       if (res) {
         count = cancelMirrorForChat(msg.chat.id);
       } else {
-        sendMessage(msg, 'You do not have permission to do that.');
+        msgTools.sendMessage(bot, msg, 'You do not have permission to do that.');
         return;
       }
     });
   } else {
-    sendMessage(msg, 'You cannot use this bot here.');
+    msgTools.sendUnauthorizedMessage(bot, msg);
     return;
   }
 
   if (count > 0) {
-    sendMessage(msg, `${count} downloads cancelled.`, 30000);
+    msgTools.sendMessage(bot, msg, `${count} downloads cancelled.`, 30000);
   } else {
-    sendMessage(msg, 'No downloads to cancel');
+    msgTools.sendMessage(bot, msg, 'No downloads to cancel');
   }
 });
 
@@ -198,7 +170,7 @@ function cancelMirrorForChat(chatId: number): number {
 function cancelMirror(dlDetails: details.DlVars, cancelMsg?: TelegramBot.Message): boolean {
   if (dlDetails.isUploading) {
     if (cancelMsg) {
-      sendMessage(cancelMsg, 'Upload in progress. Cannot cancel.');
+      msgTools.sendMessage(bot, cancelMsg, 'Upload in progress. Cannot cancel.');
     }
     return false;
   } else {
@@ -209,7 +181,7 @@ function cancelMirror(dlDetails: details.DlVars, cancelMsg?: TelegramBot.Message
 
       if (cancelMsg && dlDetails.tgChatId !== cancelMsg.chat.id) {
         // Notify if this is not the chat the download started in
-        sendMessage(cancelMsg, 'The download was canceled.');
+        msgTools.sendMessage(bot, cancelMsg, 'The download was canceled.');
       }
       if (!dlDetails.isDownloading) {
         // onDownloadStopped does not fire for downloads that haven't started yet
@@ -240,7 +212,7 @@ function handleDisallowedFilename(dlDetails: details.DlVars, filename: string): 
     var isAllowed = filenameUtils.isFilenameAllowed(filename);
     if (isAllowed === 0) {
       dlDetails.isDownloadAllowed = 0;
-      if (dlDetails.isDownloading && !dlDetails.isUploading) {
+      if (!dlDetails.isUploading) {
         cancelMirror(dlDetails);
       }
       return false;
@@ -270,79 +242,6 @@ function prepDownload(msg: TelegramBot.Message, match: string, isTar: boolean) {
 
 }
 
-function sendMessage(msg: TelegramBot.Message, text: string, delay?: number,
-  callback?: (res: TelegramBot.Message) => void, quickDeleteOriginal?: boolean) {
-  if (!delay) delay = 5000;
-  bot.sendMessage(msg.chat.id, text, {
-    reply_to_message_id: msg.message_id,
-    parse_mode: 'HTML'
-  })
-    .then((res) => {
-      if (callback) callback(res);
-      if (delay > -1) {
-        msgTools.deleteMsg(bot, res, delay);
-        if (quickDeleteOriginal) {
-          msgTools.deleteMsg(bot, msg);
-        } else {
-          msgTools.deleteMsg(bot, msg, delay);
-        }
-      }
-    })
-    .catch((err) => {
-      console.error(`sendMessage error: ${err.message}`);
-    });
-}
-
-function sendUnauthorizedMessage(msg: TelegramBot.Message) {
-  sendMessage(msg, `You aren't authorized to use this bot here.`);
-}
-
-function sendMessageReplyOriginal(dlDetails: details.DlVars, message: string): Promise<TelegramBot.Message> {
-  return bot.sendMessage(dlDetails.tgChatId, message, {
-    reply_to_message_id: dlDetails.tgMessageId,
-    parse_mode: 'HTML'
-  });
-}
-
-interface StatusPromise {
-  message: string;
-  totalDownloadCount: number;
-}
-
-/**
- * Get a single status message for all active and queued downloads.
- */
-function getStatusMessage(): Promise<StatusPromise> {
-  var singleStatusArr: Promise<string>[] = [];
-
-  dlManager.forEachDownload(dlDetails => {
-    singleStatusArr.push(getSingleStatus(dlDetails));
-  });
-
-  var result: Promise<StatusPromise> = Promise.all(singleStatusArr)
-    .then(statusArr => {
-      if (statusArr && statusArr.length > 0) {
-        var message = statusArr.reduce((prev, curr, i) => {
-          return i > 0 ? `${prev}\n\n${curr}` : `${curr}`;
-        });
-        return {
-          message: message,
-          totalDownloadCount: statusArr.length
-        };
-      } else {
-        return {
-          message: 'No active or queued downloads',
-          totalDownloadCount: 0
-        };
-      }
-    })
-    .catch(error => {
-      console.log(`getStatusMessage: ${error}`);
-      return error;
-    });
-  return result;
-}
-
 /**
  * Sends a single status message for all active and queued downloads.
  */
@@ -355,16 +254,16 @@ function sendStatusMessage(msg: TelegramBot.Message, keepForever?: boolean): Pro
   }
 
   return new Promise(resolve => {
-    getStatusMessage()
+    downloadUtils.getStatusMessage()
       .then(res => {
         if (keepForever) {
-          sendMessage(msg, res.message, -1, message => {
+          msgTools.sendMessage(bot, msg, res.message, -1, message => {
             dlManager.addStatus(message);
             resolve();
           });
         } else {
           var ttl = 60000;
-          sendMessage(msg, res.message, ttl, message => {
+          msgTools.sendMessage(bot, msg, res.message, ttl, message => {
             dlManager.addStatus(message);
             setTimeout(() => {
               dlManager.deleteStatus(msg.chat.id);
@@ -381,12 +280,20 @@ function sendStatusMessage(msg: TelegramBot.Message, keepForever?: boolean): Pro
  * Updates all status messages
  */
 function updateAllStatus() {
-  getStatusMessage()
+  downloadUtils.getStatusMessage()
     .then(res => {
       var staleStatusReply = 'ETELEGRAM: 400 Bad Request: message to edit not found';
 
+      if (res.singleStatuses) {
+        res.singleStatuses.forEach(status => {
+          if (status.dlDetails) {
+            handleDisallowedFilename(status.dlDetails, status.filename);
+          }
+        })
+      }
+
       dlManager.forEachStatus(statusMessage => {
-        editMessage(statusMessage, res.message, staleStatusReply)
+        msgTools.editMessage(bot, statusMessage, res.message, staleStatusReply)
           .catch(err => {
             if (err.message === staleStatusReply) {
               dlManager.deleteStatus(statusMessage.chat.id);
@@ -410,27 +317,6 @@ function deleteAllStatus() {
   });
 }
 
-function editMessage(msg: TelegramBot.Message, text: string, suppressError?: string): Promise<any> {
-  return new Promise((resolve, reject) => {
-    if (msg && msg.chat && msg.chat.id && msg.message_id) {
-      bot.editMessageText(text, {
-        chat_id: msg.chat.id,
-        message_id: msg.message_id,
-        parse_mode: 'HTML'
-      })
-        .then(resolve)
-        .catch(err => {
-          if (err.message !== suppressError) {
-            console.log(`editMessage error: ${err.message}`);
-          }
-          reject(err);
-        });
-    } else {
-      resolve();
-    }
-  });
-}
-
 /**
  * After a download is complete (failed or otherwise), call this to clean up.
  * @param gid The gid for the download that just finished
@@ -442,7 +328,7 @@ function cleanupDownload(gid: string, message: string, url?: string, dlDetails?:
     dlDetails = dlManager.getDownloadByGid(gid);
   }
   if (dlDetails) {
-    sendMessageReplyOriginal(dlDetails, message)
+    msgTools.sendMessageReplyOriginal(bot, dlDetails, message)
       .catch((err) => {
         console.error(`cleanupDownload sendMessage error: ${err.message}`);
       });
