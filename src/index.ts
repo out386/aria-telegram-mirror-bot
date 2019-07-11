@@ -177,7 +177,7 @@ function sendCancelledMessages() {
     var message = usernames.reduce((prev, cur, i) => (i > 0) ? `${prev}${cur}, ` : `${cur}, `,
       usernames[0]);
     message += 'your downloads have been manually cancelled.';
-    bot.sendMessage(tgChat, message)
+    bot.sendMessage(tgChat, message, { parse_mode: 'HTML' })
       .then(() => {
         dlManager.removeCancelledMessage(tgChat);
       })

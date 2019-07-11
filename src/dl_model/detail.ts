@@ -16,9 +16,9 @@ export class DlVars {
   constructor(public gid: string, msg: TelegramBot.Message, readonly isTar: boolean, downloadDir: string) {
     var username: string;
     if (msg.from.username) {
-      username = '@' + msg.from.username;
+      username = `@${msg.from.username}`;
     } else {
-      username = msg.from.first_name;
+      username = `<a href="tg://user?id=${msg.from.id}">${msg.from.first_name}</a>`;
     }
 
     this.downloadDir = downloadDir;
