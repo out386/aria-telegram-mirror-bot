@@ -101,13 +101,14 @@ export function getStatusMessage(): Promise<StatusAll> {
     .then(statusArr => {
       if (statusArr && statusArr.length > 0) {
         var message: string;
-        statusArr.forEach((value, index) => {
-          if (index > 0) {
-            message = `${message}\n\n${value.message}`;
-          } else {
-            message = value.message;
-          }
-        });
+        statusArr.sort((a, b) => a.dlDetails.startTime - b.dlDetails.startTime)
+          .forEach((value, index) => {
+            if (index > 0) {
+              message = `${message}\n\n${value.message}`;
+            } else {
+              message = value.message;
+            }
+          });
 
         return {
           message: message,

@@ -7,6 +7,7 @@ export class DlVars {
   readonly tgUsername: string;
   readonly tgChatId: number;
   readonly tgMessageId: number;
+  readonly startTime: number;
   /**
    * A subdirectory of 'constants.ARIA_DOWNLOAD_LOCATION.length', where this download
    * will be downloaded. This directory should always have a 36 character name.
@@ -26,5 +27,6 @@ export class DlVars {
     this.tgUsername = username;
     this.tgChatId = msg.chat.id;
     this.tgMessageId = msg.message_id;
+    this.startTime = new Date().getTime();
   }
 }
