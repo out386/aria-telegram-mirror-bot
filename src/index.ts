@@ -122,49 +122,70 @@ bot.onText(/^\/cancelMirror/i, (msg) => {
 
 bot.onText(/^\/cancelAll/i, (msg) => {
   var authorizedCode = msgTools.isAuthorized(msg, true);
-  var count = 0;
   if (authorizedCode === 0) {
     // One of SUDO_USERS. Cancel all downloads
     dlManager.forEachDownload(dlDetails => {
-      if (cancelMirror(dlDetails)) {
-        count++;
-      }
+      dlManager.addCancelled(dlDetails);
     });
+    cancelMultipleMirrors(msg);
 
   } else if (authorizedCode === 2) {
-    // Chat admin, but not sudo. Cancel all downloads from that chat.
-    count = cancelMirrorForChat(msg.chat.id);
+    // Chat admin, but not sudo. Cancel all downloads only from that chat.
+    dlManager.forEachDownload(dlDetails => {
+      if (msg.chat.id === dlDetails.tgChatId) {
+        dlManager.addCancelled(dlDetails);
+      }
+    });
+    cancelMultipleMirrors(msg);
+
   } else if (authorizedCode === 3) {
     msgTools.isAdmin(bot, msg, (e, res) => {
       if (res) {
-        count = cancelMirrorForChat(msg.chat.id);
+        dlManager.forEachDownload(dlDetails => {
+          if (msg.chat.id === dlDetails.tgChatId) {
+            dlManager.addCancelled(dlDetails);
+          }
+        });
+        cancelMultipleMirrors(msg);
       } else {
         msgTools.sendMessage(bot, msg, 'You do not have permission to do that.');
-        return;
       }
     });
   } else {
     msgTools.sendUnauthorizedMessage(bot, msg);
-    return;
-  }
-
-  if (count > 0) {
-    msgTools.sendMessage(bot, msg, `${count} downloads cancelled.`, 30000);
-  } else {
-    msgTools.sendMessage(bot, msg, 'No downloads to cancel');
   }
 });
 
-function cancelMirrorForChat(chatId: number): number {
+function cancelMultipleMirrors(msg: TelegramBot.Message) {
   var count = 0;
-  dlManager.forEachDownload(dlDetails => {
-    if (dlDetails.tgChatId === chatId) {
-      if (cancelMirror(dlDetails)) {
-        count++;
-      }
+  dlManager.forEachCancelledDl(dl => {
+    if (cancelMirror(dl)) {
+      count++;
     }
   });
-  return count;
+
+  if (count > 0) {
+    msgTools.sendMessage(bot, msg, `${count} downloads cancelled.`, -1);
+    sendCancelledMessages();
+  } else {
+    msgTools.sendMessage(bot, msg, 'No downloads to cancel');
+  }
+}
+
+function sendCancelledMessages() {
+  dlManager.forEachCancelledChat((usernames, tgChat) => {
+    var message = usernames.reduce((prev, cur, i) => (i > 0) ? `${prev}${cur}, ` : `${cur}, `,
+      usernames[0]);
+    message += 'your downloads have been manually cancelled.';
+    bot.sendMessage(tgChat, message)
+      .then(() => {
+        dlManager.removeCancelledMessage(tgChat);
+      })
+      .catch((err) => {
+        dlManager.removeCancelledMessage(tgChat);
+        console.error(`sendMessage error: ${err.message}`);
+      });
+  });
 }
 
 function cancelMirror(dlDetails: details.DlVars, cancelMsg?: TelegramBot.Message): boolean {
@@ -189,8 +210,8 @@ function cancelMirror(dlDetails: details.DlVars, cancelMsg?: TelegramBot.Message
         ariaOnDownloadStop(dlDetails.gid, 1);
       }
     });
+    return true;
   }
-  return true;
 }
 
 /**
@@ -328,15 +349,27 @@ function cleanupDownload(gid: string, message: string, url?: string, dlDetails?:
     dlDetails = dlManager.getDownloadByGid(gid);
   }
   if (dlDetails) {
-    msgTools.sendMessageReplyOriginal(bot, dlDetails, message)
-      .catch((err) => {
-        console.error(`cleanupDownload sendMessage error: ${err.message}`);
-      });
+    var wasCancelAlled: boolean = false;
+    dlManager.forEachCancelledDl(dlDetails => {
+      if (dlDetails.gid === gid) {
+        wasCancelAlled = true;
+      }
+    });
+    if (!wasCancelAlled) {
+      // If the dl was stopped with a cancelAll command, a message has already been sent to the chat.
+      // Do not send another one.
+      msgTools.sendMessageReplyOriginal(bot, dlDetails, message)
+        .catch((err) => {
+          console.error(`cleanupDownload sendMessage error: ${err.message}`);
+        });
+    }
+
     if (url) {
       msgTools.notifyExternal(true, gid, dlDetails.tgChatId, url);
     } else {
       msgTools.notifyExternal(false, gid, dlDetails.tgChatId);
     }
+    dlManager.removeCancelledDls(gid);
     dlManager.deleteDownload(gid);
     updateAllStatus();
     downloadUtils.deleteDownloadedFile(dlDetails.downloadDir);

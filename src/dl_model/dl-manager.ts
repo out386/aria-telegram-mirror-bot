@@ -16,6 +16,9 @@ export class DlManager {
   private statusAll: any = {};
   private statusLock: any = {};
 
+  private cancelledMessages: any = {};
+  private cancelledDls: any = {};
+
   private constructor() {
   }
 
@@ -137,4 +140,47 @@ export class DlManager {
       return toCall(msg, true);
     });
   }
+
+  addCancelled(dlDetails: dlDetails.DlVars) {
+    this.cancelledDls[dlDetails.gid] = dlDetails;
+    var message: string[] = this.cancelledMessages[dlDetails.tgChatId];
+    if (message) {
+      if (this.checkUnique(dlDetails.tgUsername, message)) {
+        message.push(dlDetails.tgUsername);
+      }
+    } else {
+      message = [dlDetails.tgUsername];
+    }
+    this.cancelledMessages[dlDetails.tgChatId] = message;
+  }
+
+  forEachCancelledDl(callback: (dlDetails: dlDetails.DlVars) => void) {
+    for (var key of Object.keys(this.cancelledDls)) {
+      callback(this.cancelledDls[key]);
+    }
+  }
+
+  forEachCancelledChat(callback: (usernames: string[], tgChat: string) => void) {
+    for (var key of Object.keys(this.cancelledMessages)) {
+      callback(this.cancelledMessages[key], key);
+    }
+  }
+
+  removeCancelledMessage(chatId: string) {
+    delete this.cancelledMessages[chatId];
+  }
+
+  removeCancelledDls(gid: string) {
+    delete this.cancelledDls[gid];
+  }
+
+  private checkUnique(toFind: string, src: string[]) {
+    for (var item of src) {
+      if (item === toFind) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 }
