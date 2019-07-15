@@ -403,7 +403,6 @@ function ariaOnDownloadStart(gid: string, retry: number) {
     }
   } else if (retry <= 8) {
     // OnDownloadStart probably got called before prepDownload's startDownload callback. Fairly common. Retry.
-    console.log(`onDownloadStart: DlDetails empty for ${gid}. ${retry} / 8.`);
     setTimeout(() => ariaOnDownloadStart(gid, retry + 1), 500);
   } else {
     console.error(`onDownloadStart: DlDetails still empty for ${gid}. Giving up.`);
@@ -421,7 +420,6 @@ function ariaOnDownloadStop(gid: string, retry: number) {
     cleanupDownload(gid, message);
   } else if (retry <= 8) {
     // OnDownloadStop probably got called before prepDownload's startDownload callback. Unlikely. Retry.
-    console.log(`onDownloadStop: DlDetails empty for ${gid}. ${retry} / 8.`);
     setTimeout(() => ariaOnDownloadStop(gid, retry + 1), 500);
   } else {
     console.error(`onDownloadStop: DlDetails still empty for ${gid}. Giving up.`);
@@ -479,7 +477,6 @@ function ariaOnDownloadComplete(gid: string, retry: number) {
     });
   } else if (retry <= 8) {
     // OnDownloadComplete probably got called before prepDownload's startDownload callback. Highly unlikely. Retry.
-    console.log(`onDownloadComplete: DlDetails empty for ${gid}. ${retry} / 8.`);
     setTimeout(() => ariaOnDownloadComplete(gid, retry + 1), 500);
   } else {
     console.error(`onDownloadComplete: DlDetails still empty for ${gid}. Giving up.`);
@@ -504,7 +501,6 @@ function ariaOnDownloadError(gid: string, retry: number) {
     // OnDownloadError probably got called before prepDownload's startDownload callback,
     // or gid refers to a torrent files download, and onDownloadComplete for the torrent's
     // metadata hasn't been called yet. Fairly likely. Retry.
-    console.log(`onDownloadError: DlDetails empty for ${gid}. ${retry} / 8.`);
     setTimeout(() => ariaOnDownloadError(gid, retry + 1), 500);
   } else {
     console.error(`onDownloadError: DlDetails still empty for ${gid}. Giving up.`);
