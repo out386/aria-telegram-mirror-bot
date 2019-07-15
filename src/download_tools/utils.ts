@@ -101,7 +101,7 @@ export function getStatusMessage(): Promise<StatusAll> {
     .then(statusArr => {
       if (statusArr && statusArr.length > 0) {
         var message: string;
-        statusArr.sort((a, b) => a.dlDetails.startTime - b.dlDetails.startTime)
+        statusArr.sort((a, b) => (a.dlDetails && b.dlDetails) ? (a.dlDetails.startTime - b.dlDetails.startTime) : 1)
           .forEach((value, index) => {
             if (index > 0) {
               message = `${message}\n\n${value.message}`;
