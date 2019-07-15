@@ -270,7 +270,7 @@ function sendStatusMessage(msg: TelegramBot.Message, keepForever?: boolean): Pro
   var lastStatus = dlManager.getStatus(msg.chat.id);
 
   if (lastStatus) {
-    msgTools.deleteMsg(bot, lastStatus);
+    msgTools.deleteMsg(bot, lastStatus.msg);
     dlManager.deleteStatus(msg.chat.id);
   }
 
@@ -279,13 +279,13 @@ function sendStatusMessage(msg: TelegramBot.Message, keepForever?: boolean): Pro
       .then(res => {
         if (keepForever) {
           msgTools.sendMessage(bot, msg, res.message, -1, message => {
-            dlManager.addStatus(message);
+            dlManager.addStatus(message, res.message);
             resolve();
           });
         } else {
           var ttl = 60000;
           msgTools.sendMessage(bot, msg, res.message, ttl, message => {
-            dlManager.addStatus(message);
+            dlManager.addStatus(message, res.message);
             setTimeout(() => {
               dlManager.deleteStatus(msg.chat.id);
             }, ttl);
@@ -313,13 +313,18 @@ function updateAllStatus() {
         })
       }
 
-      dlManager.forEachStatus(statusMessage => {
-        msgTools.editMessage(bot, statusMessage, res.message, staleStatusReply)
-          .catch(err => {
-            if (err.message === staleStatusReply) {
-              dlManager.deleteStatus(statusMessage.chat.id);
-            }
-          })
+      dlManager.forEachStatus(status => {
+        // Do not update the status if the message remains the same.
+        // Otherwise, the Telegram API starts complaining.
+        if (res.message !== status.lastStatus) {
+          msgTools.editMessage(bot, status.msg, res.message, staleStatusReply)
+            .catch(err => {
+              if (err.message === staleStatusReply) {
+                dlManager.deleteStatus(status.msg.chat.id);
+              }
+            });
+          status.lastStatus = res.message;
+        }
       });
 
       if (res.totalDownloadCount === 0) {
@@ -333,8 +338,8 @@ function updateAllStatus() {
 
 function deleteAllStatus() {
   dlManager.forEachStatus(statusMessage => {
-    msgTools.deleteMsg(bot, statusMessage, 10000);
-    dlManager.deleteStatus(statusMessage.chat.id);
+    msgTools.deleteMsg(bot, statusMessage.msg, 10000);
+    dlManager.deleteStatus(statusMessage.msg.chat.id);
   });
 }
 

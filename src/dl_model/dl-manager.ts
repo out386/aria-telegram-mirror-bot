@@ -106,22 +106,24 @@ export class DlManager {
    * @param chatId The chat ID of the target chat
    * @returns {TelegramBot.Message} The status message for the target group
    */
-  getStatus(chatId: number): TelegramBot.Message {
+  getStatus(chatId: number): StatusAll {
     return this.statusAll[chatId];
   }
 
-  addStatus(msg: TelegramBot.Message) {
-    this.statusAll[msg.chat.id] = msg;
+  addStatus(msg: TelegramBot.Message, lastStatus: string) {
+    this.statusAll[msg.chat.id] = {
+      msg: msg,
+      lastStatus: lastStatus
+    }
   }
 
   /**
    * Call the callback function for each general status message.
    * @param callback 
    */
-  forEachStatus(callback: (message: TelegramBot.Message) => void) {
+  forEachStatus(callback: (status: StatusAll) => void) {
     for (var key of Object.keys(this.statusAll)) {
-      var message: TelegramBot.Message = this.statusAll[key];
-      callback(message);
+      callback(this.statusAll[key]);
     }
   }
 
@@ -183,4 +185,9 @@ export class DlManager {
     return true;
   }
 
+}
+
+interface StatusAll {
+  msg: TelegramBot.Message,
+  lastStatus: string
 }
