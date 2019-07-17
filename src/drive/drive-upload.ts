@@ -2,6 +2,7 @@ import driveAuth = require('./drive-auth');
 import driveFile = require('./upload-file');
 import utils = require('./drive-utils');
 import { google, drive_v3 } from 'googleapis';
+import constants = require('../.constants.js');
 
 
 export function uploadFileOrFolder(filePath: string, mime: string, parent: string, size:number, callback: (err: string, id: string) => void) {
@@ -51,14 +52,24 @@ export function getSharableLink(fileId:string, isFolder:boolean, callback: (err:
       return;
     }
     const drive = google.drive({ version: 'v3', auth });
+    var resource;
+    if (constants.DRIVE_FILE_PRIVATE && constants.DRIVE_FILE_PRIVATE.enabled) {
+      resource = {
+        role: 'reader',
+        type: 'user',
+        emailAddress: constants.DRIVE_FILE_PRIVATE.email
+      };
+    } else {
+      resource = {
+        role: 'reader',
+        type: 'anyone'
+      };
+    }
 
     drive.permissions.create({
       fileId: fileId,
       // @ts-ignore Unknown property error
-      resource: {
-        role: 'reader',
-        type: 'anyone'
-      }
+      resource: resource
     },
       (err:Error, res:any) => {
         if (err) {
