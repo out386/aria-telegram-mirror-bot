@@ -112,6 +112,9 @@ This is a description of the fields in src/.constants.js:
 * `SUDO_USERS`: This is a list of Telegram user IDs. These users can use the bot in any chat. Can be an empty list, if AUTHORIZED_CHATS is not empty.
 * `AUTHORIZED_CHATS`: This is a list of Telegram Chat IDs. Anyone in these chats can use the bot in that particular chat. Anyone not in one of these chats and not in SUDO_USERS cannot use the bot. Someone in one of the chats in this list can use the bot only in that chat, not elsewhere. Can be an empty list, if SUDO_USERS is not empty.
 * `STATUS_UPDATE_INTERVAL_MS`: Set the time in milliseconds between status updates. A smaller number will update status messages faster, but Telegram will rate limit the bot if it sends/edits more than around 20 messages/minute/chat. As that quota includes messages other than status updates, do not decrease this number if you get rate limit messages in the logs.
+* `DRIVE_FILE_PRIVATE`: Files uploaded can either be visible to everyone (public), or be private.
+  * `enabled`: Set this to `true` to make the uploaded files private. `false` makes uploaded files public.
+  * `email`: The email address of the user to grant read access to.
 * `DOWNLOAD_NOTIFY_TARGET`: The fields here are used to notify an external web server once a download is complete. See the [section on notifications below](#Notifying-an-external-webserver-on-download-completion) for details.
    * `enabled`: Set this to `true` to enable this feature.
    * `host`: The address of the web server to notify.
