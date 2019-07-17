@@ -3,6 +3,7 @@ import driveFile = require('./upload-file');
 import utils = require('./drive-utils');
 import { google, drive_v3 } from 'googleapis';
 import constants = require('../.constants.js');
+import { AxiosResponse } from 'axios';
 
 
 export function uploadFileOrFolder(filePath: string, mime: string, parent: string, size:number, callback: (err: string, id: string) => void) {
@@ -52,31 +53,39 @@ export function getSharableLink(fileId:string, isFolder:boolean, callback: (err:
       return;
     }
     const drive = google.drive({ version: 'v3', auth });
-    var resource;
-    if (constants.DRIVE_FILE_PRIVATE && constants.DRIVE_FILE_PRIVATE.enabled) {
-      resource = {
-        role: 'reader',
-        type: 'user',
-        emailAddress: constants.DRIVE_FILE_PRIVATE.email
-      };
-    } else {
-      resource = {
-        role: 'reader',
-        type: 'anyone'
-      };
-    }
-
-    drive.permissions.create({
-      fileId: fileId,
-      requestBody: resource
-    },
-      (err:Error, res:any) => {
-        if (err) {
-          callback(err.message, null);
-        } else {
-          callback(null, utils.getFileLink(fileId, isFolder));
-        }
+    createPermissions(drive, fileId)
+      .then(() => {
+        callback(null, utils.getFileLink(fileId, isFolder));
+      })
+      .catch(err => {
+        callback(err.message, null);
       });
   });
 }
 
+async function createPermissions(drive: drive_v3.Drive, fileId: string): Promise<any> {
+  if (constants.DRIVE_FILE_PRIVATE && constants.DRIVE_FILE_PRIVATE.ENABLED) {
+    var req: AxiosResponse<drive_v3.Schema$Permission>[] = [];
+
+    for (var email of constants.DRIVE_FILE_PRIVATE.EMAILS) {
+      var perm = await drive.permissions.create({
+        fileId: fileId,
+        requestBody: {
+          role: 'reader',
+          type: 'user',
+          emailAddress: email
+        }
+      });
+      req.push(perm);
+    }
+    return Promise.all(req);
+  } else {
+    return drive.permissions.create({
+      fileId: fileId,
+      requestBody: {
+        role: 'reader',
+        type: 'anyone'
+      }
+    });
+  }
+}
