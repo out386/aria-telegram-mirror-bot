@@ -68,8 +68,7 @@ export function getSharableLink(fileId:string, isFolder:boolean, callback: (err:
 
     drive.permissions.create({
       fileId: fileId,
-      // @ts-ignore Unknown property error
-      resource: resource
+      requestBody: resource
     },
       (err:Error, res:any) => {
         if (err) {
