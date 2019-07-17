@@ -3,6 +3,7 @@ export class DlVars {
   isUploading: boolean;
   isDownloadAllowed: number;
   isDownloading: boolean;
+  gid: string;
   readonly tgFromId: number;
   readonly tgUsername: string;
   readonly tgChatId: number;
@@ -14,7 +15,7 @@ export class DlVars {
    */
   readonly downloadDir: string;
 
-  constructor(public gid: string, msg: TelegramBot.Message, readonly isTar: boolean, downloadDir: string) {
+  constructor(gid: string, msg: TelegramBot.Message, readonly isTar: boolean, downloadDir: string) {
     var username: string;
     if (msg.from.username) {
       username = `@${msg.from.username}`;
@@ -22,6 +23,7 @@ export class DlVars {
       username = `<a href="tg://user?id=${msg.from.id}">${msg.from.first_name}</a>`;
     }
 
+    this.gid = gid;
     this.downloadDir = downloadDir;
     this.tgFromId = msg.from.id;
     this.tgUsername = username;

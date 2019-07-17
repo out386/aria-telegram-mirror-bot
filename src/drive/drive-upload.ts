@@ -6,7 +6,7 @@ import constants = require('../.constants.js');
 import { AxiosResponse } from 'axios';
 
 
-export function uploadFileOrFolder(filePath: string, mime: string, parent: string, size:number, callback: (err: string, id: string) => void) {
+export function uploadFileOrFolder(filePath: string, mime: string, parent: string, size:number, callback: (err: string, id: string) => void): void {
   driveAuth.call((err, auth) => {
     if (err) {
       callback(err, null);
@@ -27,7 +27,7 @@ export function uploadFileOrFolder(filePath: string, mime: string, parent: strin
   });
 }
 
-function createFolderOrEmpty(drive: drive_v3.Drive, filePath: string, parent: string, mime:string, callback: (err: string, id: string) => void) {
+function createFolderOrEmpty(drive: drive_v3.Drive, filePath: string, parent: string, mime:string, callback: (err: string, id: string) => void): void {
   drive.files.create({
     // @ts-ignore Unknown property error
     fields: 'id',
@@ -46,7 +46,7 @@ function createFolderOrEmpty(drive: drive_v3.Drive, filePath: string, parent: st
     });
 }
 
-export function getSharableLink(fileId:string, isFolder:boolean, callback: (err: string, url: string) => void) {
+export function getSharableLink(fileId:string, isFolder:boolean, callback: (err: string, url: string) => void): void {
   driveAuth.call((err, auth) => {
     if (err) {
       callback(err, null);

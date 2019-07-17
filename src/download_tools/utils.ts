@@ -11,7 +11,7 @@ var dlManager = dlm.DlManager.getInstance();
 const PROGRESS_MAX_SIZE = Math.floor(100 / 8);
 const PROGRESS_INCOMPLETE = ['▏', '▎', '▍', '▌', '▋', '▊', '▉'];
 
-export function deleteDownloadedFile(subdirName: string) {
+export function deleteDownloadedFile(subdirName: string): void {
   fs.remove(`${constants.ARIA_DOWNLOAD_LOCATION}/${subdirName}`)
     .then(() => {
       console.log(`cleanup: Deleted ${subdirName}\n`);

@@ -9,7 +9,7 @@ import gdrive = require('./drive/drive-upload');
  * @param {string} parent The ID of the Drive folder to upload into
  * @param {function} callback A function to call with an error or the public Drive link
  */
-export function uploadRecursive(path: string, parent: string, callback: (err: string, url: string) => void) {
+export function uploadRecursive(path: string, parent: string, callback: (err: string, url: string) => void): void {
   fs.stat(path, (err, stat) => {
     if (err) {
       callback(err.message, null);
@@ -41,17 +41,7 @@ export function uploadRecursive(path: string, parent: string, callback: (err: st
   });
 }
 
-/* function getSharableLink (fileId:string, isFolder:boolean, callback) {
-  gdrive.getSharableLink(fileId, isFolder, (err, link) => {
-    if (err) {
-      callback(err);
-    } else {
-      callback(null, link);
-    }
-  });
-} */
-
-function walkSubPath(path: string, parent: string, callback: (err: string) => void) {
+function walkSubPath(path: string, parent: string, callback: (err: string) => void): void {
   fs.readdir(path, (err, files) => {
     if (err) {
       callback(err.message);
@@ -61,13 +51,13 @@ function walkSubPath(path: string, parent: string, callback: (err: string) => vo
   });
 }
 
-function walkSingleDir(path: string, files: string[], parent: string, callback: (err: string) => void) {
+function walkSingleDir(path: string, files: string[], parent: string, callback: (err: string) => void): void {
   if (files.length === 0) {
     callback(null);
     return;
   }
 
-  var uploadNext = function (position: number) {
+  var uploadNext = function (position: number): void {
     processFileOrDir(path + '/' + files[position], parent, (err: string) => {
       if (err) {
         callback(err);
@@ -83,7 +73,7 @@ function walkSingleDir(path: string, files: string[], parent: string, callback: 
   uploadNext(0);
 }
 
-function processFileOrDir(path: string, parent: string, callback: (err: string, fileId?: string) => void) {
+function processFileOrDir(path: string, parent: string, callback: (err: string, fileId?: string) => void): void {
   fs.stat(path, (err, stat) => {
     if (err) {
       callback(err.message);

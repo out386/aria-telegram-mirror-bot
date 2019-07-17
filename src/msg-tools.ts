@@ -6,11 +6,11 @@ import details = require('./dl_model/detail');
 import dlm = require('./dl_model/dl-manager');
 var dlManager = dlm.DlManager.getInstance();
 
-export async function deleteMsg(bot: TelegramBot, msg: TelegramBot.Message, delay?: number) {
+export async function deleteMsg(bot: TelegramBot, msg: TelegramBot.Message, delay?: number): Promise<any> {
   if (delay) await sleep(delay);
 
   bot.deleteMessage(msg.chat.id, msg.message_id.toString())
-    .catch(ignored => { });
+    .catch();
 }
 
 export function editMessage(bot: TelegramBot, msg: TelegramBot.Message, text: string, suppressError?: string): Promise<any> {
@@ -35,7 +35,7 @@ export function editMessage(bot: TelegramBot, msg: TelegramBot.Message, text: st
 }
 
 export function sendMessage(bot: TelegramBot, msg: TelegramBot.Message, text: string, delay?: number,
-  callback?: (res: TelegramBot.Message) => void, quickDeleteOriginal?: boolean) {
+  callback?: (res: TelegramBot.Message) => void, quickDeleteOriginal?: boolean): void {
   if (!delay) delay = 5000;
   bot.sendMessage(msg.chat.id, text, {
     reply_to_message_id: msg.message_id,
@@ -57,7 +57,7 @@ export function sendMessage(bot: TelegramBot, msg: TelegramBot.Message, text: st
     });
 }
 
-export function sendUnauthorizedMessage(bot: TelegramBot, msg: TelegramBot.Message) {
+export function sendUnauthorizedMessage(bot: TelegramBot, msg: TelegramBot.Message): void {
   sendMessage(bot, msg, `You aren't authorized to use this bot here.`);
 }
 
@@ -68,11 +68,11 @@ export function sendMessageReplyOriginal(bot: TelegramBot, dlDetails: details.Dl
   });
 }
 
-export function sleep(ms: number) {
+export function sleep(ms: number): Promise<any> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function isAuthorized(msg: TelegramBot.Message, skipDlOwner?: boolean) {
+export function isAuthorized(msg: TelegramBot.Message, skipDlOwner?: boolean): number {
   for (var i = 0; i < constants.SUDO_USERS.length; i++) {
     if (constants.SUDO_USERS[i] === msg.from.id) return 0;
   }
@@ -86,7 +86,7 @@ export function isAuthorized(msg: TelegramBot.Message, skipDlOwner?: boolean) {
   return -1;
 }
 
-export function isAdmin(bot: TelegramBot, msg: TelegramBot.Message, callback: (err: string, isAdmin: boolean) => void) {
+export function isAdmin(bot: TelegramBot, msg: TelegramBot.Message, callback: (err: string, isAdmin: boolean) => void): void {
   bot.getChatAdministrators(msg.chat.id)
     .then(members => {
       for (var i = 0; i < members.length; i++) {
@@ -109,7 +109,7 @@ export function isAdmin(bot: TelegramBot, msg: TelegramBot.Message, callback: (e
  * @param {number} originGroup The Telegram chat ID of the group where the download started
  * @param {string} driveURL The URL of the uploaded file
  */
-export function notifyExternal(successful: boolean, gid: string, originGroup: number, driveURL?: string) {
+export function notifyExternal(successful: boolean, gid: string, originGroup: number, driveURL?: string): void {
   if (!constants.DOWNLOAD_NOTIFY_TARGET || !constants.DOWNLOAD_NOTIFY_TARGET.enabled) return;
   ariaTools.getStatus(gid, (err, message, filename, filesize) => {
     var name;

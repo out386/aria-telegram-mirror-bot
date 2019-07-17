@@ -49,7 +49,7 @@ bot.onText(/^\/mirror (.+)/i, (msg, match) => {
  * @param {Array} match Message matches
  * @param {boolean} isTar Decides if this download should be archived before upload
  */
-function mirror(msg: TelegramBot.Message, match: RegExpExecArray, isTar?: boolean) {
+function mirror(msg: TelegramBot.Message, match: RegExpExecArray, isTar?: boolean): void {
   if (websocketOpened) {
     if (downloadUtils.isDownloadAllowed(match[1])) {
       prepDownload(msg, match[1], isTar);
@@ -156,7 +156,7 @@ bot.onText(/^\/cancelAll/i, (msg) => {
   }
 });
 
-function cancelMultipleMirrors(msg: TelegramBot.Message) {
+function cancelMultipleMirrors(msg: TelegramBot.Message): void {
   var count = 0;
   dlManager.forEachCancelledDl(dl => {
     if (cancelMirror(dl)) {
@@ -172,7 +172,7 @@ function cancelMultipleMirrors(msg: TelegramBot.Message) {
   }
 }
 
-function sendCancelledMessages() {
+function sendCancelledMessages(): void {
   dlManager.forEachCancelledChat((usernames, tgChat) => {
     var message = usernames.reduce((prev, cur, i) => (i > 0) ? `${prev}${cur}, ` : `${cur}, `,
       usernames[0]);
@@ -244,7 +244,7 @@ function handleDisallowedFilename(dlDetails: details.DlVars, filename: string): 
   return true;
 }
 
-function prepDownload(msg: TelegramBot.Message, match: string, isTar: boolean) {
+function prepDownload(msg: TelegramBot.Message, match: string, isTar: boolean): void {
   var dlDir = uuid();
   ariaTools.addUri(match, dlDir, (err, gid) => {
     dlManager.addDownload(gid, dlDir, msg, isTar);
@@ -300,7 +300,7 @@ function sendStatusMessage(msg: TelegramBot.Message, keepForever?: boolean): Pro
 /**
  * Updates all status messages
  */
-function updateAllStatus() {
+function updateAllStatus(): void {
   downloadUtils.getStatusMessage()
     .then(res => {
       var staleStatusReply = 'ETELEGRAM: 400 Bad Request: message to edit not found';
@@ -310,7 +310,7 @@ function updateAllStatus() {
           if (status.dlDetails) {
             handleDisallowedFilename(status.dlDetails, status.filename);
           }
-        })
+        });
       }
 
       dlManager.forEachStatus(status => {
@@ -336,7 +336,7 @@ function updateAllStatus() {
     }).catch();
 }
 
-function deleteAllStatus() {
+function deleteAllStatus(): void {
   dlManager.forEachStatus(statusMessage => {
     msgTools.deleteMsg(bot, statusMessage.msg, 10000);
     dlManager.deleteStatus(statusMessage.msg.chat.id);
@@ -349,12 +349,12 @@ function deleteAllStatus() {
  * @param message The message to send as the Telegram download complete message
  * @param url The public Google Drive URL for the uploaded file
  */
-function cleanupDownload(gid: string, message: string, url?: string, dlDetails?: details.DlVars) {
+function cleanupDownload(gid: string, message: string, url?: string, dlDetails?: details.DlVars): void {
   if (!dlDetails) {
     dlDetails = dlManager.getDownloadByGid(gid);
   }
   if (dlDetails) {
-    var wasCancelAlled: boolean = false;
+    var wasCancelAlled = false;
     dlManager.forEachCancelledDl(dlDetails => {
       if (dlDetails.gid === gid) {
         wasCancelAlled = true;
@@ -384,7 +384,7 @@ function cleanupDownload(gid: string, message: string, url?: string, dlDetails?:
   }
 }
 
-function ariaOnDownloadStart(gid: string, retry: number) {
+function ariaOnDownloadStart(gid: string, retry: number): void {
   var dlDetails = dlManager.getDownloadByGid(gid);
   if (dlDetails) {
     dlManager.moveDownloadToActive(dlDetails);
@@ -409,7 +409,7 @@ function ariaOnDownloadStart(gid: string, retry: number) {
   }
 }
 
-function ariaOnDownloadStop(gid: string, retry: number) {
+function ariaOnDownloadStop(gid: string, retry: number): void {
   var dlDetails = dlManager.getDownloadByGid(gid);
   if (dlDetails) {
     console.log('stop', gid);
@@ -426,7 +426,7 @@ function ariaOnDownloadStop(gid: string, retry: number) {
   }
 }
 
-function ariaOnDownloadComplete(gid: string, retry: number) {
+function ariaOnDownloadComplete(gid: string, retry: number): void {
   var dlDetails = dlManager.getDownloadByGid(gid);
   if (dlDetails) {
 
@@ -483,7 +483,7 @@ function ariaOnDownloadComplete(gid: string, retry: number) {
   }
 }
 
-function ariaOnDownloadError(gid: string, retry: number) {
+function ariaOnDownloadError(gid: string, retry: number): void {
   var dlDetails = dlManager.getDownloadByGid(gid);
   if (dlDetails) {
     ariaTools.getError(gid, (err, res) => {
@@ -507,7 +507,7 @@ function ariaOnDownloadError(gid: string, retry: number) {
   }
 }
 
-function initAria2() {
+function initAria2(): void {
   ariaTools.openWebsocket((err) => {
     if (err) {
       console.error('A2C: Failed to open websocket. Run aria.sh first. Exiting.');
@@ -524,7 +524,8 @@ function initAria2() {
   ariaTools.setOnDownloadError(ariaOnDownloadError);
 }
 
-function driveUploadCompleteCallback(err: string, gid: string, url: string, filePath: string, fileName: string, fileSize: number) {
+
+function driveUploadCompleteCallback(err: string, gid: string, url: string, filePath: string, fileName: string, fileSize: number): void {
   var finalMessage;
   if (err) {
     var message = err;

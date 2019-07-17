@@ -1,7 +1,7 @@
 import tar = require('tar');
 import fs = require('fs');
 
-export function archive(srcPath: string, destName: string, callback: (err: string, size: number) => void) {
+export function archive(srcPath: string, destName: string, callback: (err: string, size: number) => void): void {
   var dlDirPath = srcPath.substring(0, srcPath.lastIndexOf('/'));
   var writeStream = fs.createWriteStream(`${dlDirPath}/${destName}`);
   var targetDirName = `${srcPath.substring(srcPath.lastIndexOf('/') + 1)}`;

@@ -29,7 +29,7 @@ export class DlManager {
     return DlManager.instance;
   }
 
-  addDownload(gid: string, dlDir: string, msg: TelegramBot.Message, isTar: boolean) {
+  addDownload(gid: string, dlDir: string, msg: TelegramBot.Message, isTar: boolean): void {
     var detail = new dlDetails.DlVars(gid, msg, isTar, dlDir);
     this.allDls[gid] = detail;
   }
@@ -42,7 +42,7 @@ export class DlManager {
    * Mark a download as active, once Aria2 starts downloading it.
    * @param dlDetails The details for the download
    */
-  moveDownloadToActive(dlDetails: dlDetails.DlVars) {
+  moveDownloadToActive(dlDetails: dlDetails.DlVars): void {
     dlDetails.isDownloading = true;
     dlDetails.isUploading = false;
     this.activeDls[dlDetails.gid] = dlDetails;
@@ -57,7 +57,7 @@ export class DlManager {
    * @param oldGid The GID of the original download (the download metadata)
    * @param newGid The GID of the new download (the files specified in the metadata)
    */
-  changeDownloadGid(oldGid: string, newGid: string) {
+  changeDownloadGid(oldGid: string, newGid: string): void {
     var dlDetails = this.getDownloadByGid(oldGid);
     this.deleteDownload(oldGid);
     dlDetails.gid = newGid;
@@ -81,7 +81,7 @@ export class DlManager {
     return null;
   }
 
-  deleteDownload(gid: string) {
+  deleteDownload(gid: string): void {
     delete this.allDls[gid];
     delete this.activeDls[gid];
   }
@@ -90,14 +90,14 @@ export class DlManager {
    * Call the callback function for each download.
    * @param callback 
    */
-  forEachDownload(callback: (dlDetails: dlDetails.DlVars) => void) {
+  forEachDownload(callback: (dlDetails: dlDetails.DlVars) => void): void {
     for (var key of Object.keys(this.allDls)) {
       var details = this.allDls[key];
       callback(details);
     }
   }
 
-  deleteStatus(chatId: number) {
+  deleteStatus(chatId: number): void {
     delete this.statusAll[chatId];
   }
 
@@ -110,18 +110,18 @@ export class DlManager {
     return this.statusAll[chatId];
   }
 
-  addStatus(msg: TelegramBot.Message, lastStatus: string) {
+  addStatus(msg: TelegramBot.Message, lastStatus: string): void {
     this.statusAll[msg.chat.id] = {
       msg: msg,
       lastStatus: lastStatus
-    }
+    };
   }
 
   /**
    * Call the callback function for each general status message.
    * @param callback 
    */
-  forEachStatus(callback: (status: StatusAll) => void) {
+  forEachStatus(callback: (status: StatusAll) => void): void {
     for (var key of Object.keys(this.statusAll)) {
       callback(this.statusAll[key]);
     }
@@ -133,7 +133,7 @@ export class DlManager {
    * @param msg The Telegram message that caused this status update
    * @param toCall The function to call to perform the status update
    */
-  setStatusLock(msg: TelegramBot.Message, toCall: (msg: TelegramBot.Message, keep: boolean) => Promise<any>) {
+  setStatusLock(msg: TelegramBot.Message, toCall: (msg: TelegramBot.Message, keep: boolean) => Promise<any>): void {
     if (!this.statusLock[msg.chat.id]) {
       this.statusLock[msg.chat.id] = Promise.resolve();
     }
@@ -143,7 +143,7 @@ export class DlManager {
     });
   }
 
-  addCancelled(dlDetails: dlDetails.DlVars) {
+  addCancelled(dlDetails: dlDetails.DlVars): void {
     this.cancelledDls[dlDetails.gid] = dlDetails;
     var message: string[] = this.cancelledMessages[dlDetails.tgChatId];
     if (message) {
@@ -156,27 +156,27 @@ export class DlManager {
     this.cancelledMessages[dlDetails.tgChatId] = message;
   }
 
-  forEachCancelledDl(callback: (dlDetails: dlDetails.DlVars) => void) {
+  forEachCancelledDl(callback: (dlDetails: dlDetails.DlVars) => void): void {
     for (var key of Object.keys(this.cancelledDls)) {
       callback(this.cancelledDls[key]);
     }
   }
 
-  forEachCancelledChat(callback: (usernames: string[], tgChat: string) => void) {
+  forEachCancelledChat(callback: (usernames: string[], tgChat: string) => void): void {
     for (var key of Object.keys(this.cancelledMessages)) {
       callback(this.cancelledMessages[key], key);
     }
   }
 
-  removeCancelledMessage(chatId: string) {
+  removeCancelledMessage(chatId: string): void {
     delete this.cancelledMessages[chatId];
   }
 
-  removeCancelledDls(gid: string) {
+  removeCancelledDls(gid: string): void {
     delete this.cancelledDls[gid];
   }
 
-  private checkUnique(toFind: string, src: string[]) {
+  private checkUnique(toFind: string, src: string[]): boolean {
     for (var item of src) {
       if (item === toFind) {
         return false;

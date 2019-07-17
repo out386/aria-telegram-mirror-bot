@@ -1,4 +1,4 @@
-export function getFileLink(fileId: string, isFolder: boolean) {
+export function getFileLink(fileId: string, isFolder: boolean): string {
   if (isFolder) {
     return 'https://drive.google.com/drive/folders/' + fileId;
   } else {
@@ -6,7 +6,7 @@ export function getFileLink(fileId: string, isFolder: boolean) {
   }
 }
 
-export function getPublicUrlRequestHeaders(size: number, mimeType: string, token: string, fileName: string, parent: string) {
+export function getPublicUrlRequestHeaders(size: number, mimeType: string, token: string, fileName: string, parent: string): any {
   return {
     method: 'POST',
     url: 'https://www.googleapis.com/upload/drive/v3/files',

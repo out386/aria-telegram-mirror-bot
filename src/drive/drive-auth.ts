@@ -10,7 +10,7 @@ const TOKEN_PATH = './credentials.json';
  * Authorize a client with credentials, then call the Google Drive API.
  * @param {function} callback The callback to call with the authorized client.
  */
-export function call(callback: (err: string, client: OAuth2Client) => void) {
+export function call(callback: (err: string, client: OAuth2Client) => void): void {
   // Load client secrets from a local file.
   fs.readFile('./client_secret.json', 'utf8', (err, content) => {
     if (err) {
@@ -28,7 +28,7 @@ export function call(callback: (err: string, client: OAuth2Client) => void) {
  * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
-function authorize(credentials: any, callback: (err: string, client: OAuth2Client) => void) {
+function authorize(credentials: any, callback: (err: string, client: OAuth2Client) => void): void {
   const clientSecret = credentials.installed.client_secret;
   const clientId = credentials.installed.client_id;
   const redirectUris = credentials.installed.redirect_uris;
@@ -49,7 +49,7 @@ function authorize(credentials: any, callback: (err: string, client: OAuth2Clien
  * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
  * @param {getEventsCallback} callback The callback for the authorized client.
  */
-function getAccessToken(oAuth2Client: OAuth2Client, callback: (err: string, client: OAuth2Client) => void) {
+function getAccessToken(oAuth2Client: OAuth2Client, callback: (err: string, client: OAuth2Client) => void): void {
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: SCOPE

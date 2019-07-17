@@ -100,7 +100,7 @@ export function uploadGoogleDriveFile(parent: string, file: { filePath: string, 
         var token = tokenResponse.token;
         var options = driveUtils.getPublicUrlRequestHeaders(size, file.mimeType, token, fileName, parent);
 
-        request(options, async function (error, response) {
+        request(options, async function (error: Error, response: request.Response) {
           if (error) {
             return reject(error);
           }

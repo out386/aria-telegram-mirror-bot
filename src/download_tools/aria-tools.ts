@@ -4,8 +4,8 @@ const Aria2 = require('aria2');
 import constants = require('../.constants');
 import tar = require('../drive/tar');
 const diskspace = require('diskspace');
-import dlDetails = require('../dl_model/detail');
 import filenameUtils = require('./filename-utils');
+import { DlVars } from '../dl_model/detail';
 
 const ariaOptions = {
   host: 'localhost',
@@ -16,7 +16,7 @@ const ariaOptions = {
 };
 const aria2 = new Aria2(ariaOptions);
 
-export function openWebsocket(callback: (err: string) => void) {
+export function openWebsocket(callback: (err: string) => void): void {
   aria2.open()
     .then(() => {
       callback(null);
@@ -26,31 +26,31 @@ export function openWebsocket(callback: (err: string) => void) {
     });
 }
 
-export function setOnDownloadStart(callback: (gid: string, retry: number) => void) {
+export function setOnDownloadStart(callback: (gid: string, retry: number) => void): void {
   aria2.onDownloadStart = (keys: any) => {
     callback(keys.gid, 1);
   };
 }
 
-export function setOnDownloadStop(callback: (gid: string, retry: number) => void) {
+export function setOnDownloadStop(callback: (gid: string, retry: number) => void): void {
   aria2.onDownloadStop = (keys: any) => {
     callback(keys.gid, 1);
   };
 }
 
-export function setOnDownloadComplete(callback: (gid: string, retry: number) => void) {
+export function setOnDownloadComplete(callback: (gid: string, retry: number) => void): void {
   aria2.onDownloadComplete = (keys: any) => {
     callback(keys.gid, 1);
   };
 }
 
-export function setOnDownloadError(callback: (gid: string, retry: number) => void) {
+export function setOnDownloadError(callback: (gid: string, retry: number) => void): void {
   aria2.onDownloadError = (keys: any) => {
     callback(keys.gid, 1);
   };
 }
 
-export function getAriaFilePath(gid: string, callback: (err: string, file: string) => void) {
+export function getAriaFilePath(gid: string, callback: (err: string, file: string) => void): void {
   aria2.getFiles(gid, (err: any, files: any[]) => {
     if (err) {
       callback(err.message, null);
@@ -72,7 +72,7 @@ export function getAriaFilePath(gid: string, callback: (err: string, file: strin
  * @param {string} gid The Aria2 GID of the download
  * @param {function} callback The function to call on completion. (err, message, filename, filesize).
  */
-export function getStatus(gid: string, callback: (err: string, message: string, filename: string, filesize: string) => void) {
+export function getStatus(gid: string, callback: (err: string, message: string, filename: string, filesize: string) => void): void{
   aria2.tellStatus(gid,
     ['status', 'totalLength', 'completedLength', 'downloadSpeed', 'files'],
     (err: any, res: any) => {
@@ -98,7 +98,7 @@ export function getStatus(gid: string, callback: (err: string, message: string, 
     });
 }
 
-export function getError(gid: string, callback: (err: string, message: string) => void) {
+export function getError(gid: string, callback: (err: string, message: string) => void): void {
   aria2.tellStatus(gid, ['errorMessage'], (err: any, res: any) => {
     if (err) {
       callback(err.message, null);
@@ -108,7 +108,7 @@ export function getError(gid: string, callback: (err: string, message: string) =
   });
 }
 
-export function isDownloadMetadata(gid: string, callback: (err: string, isMetadata: boolean, newGid: string) => void) {
+export function isDownloadMetadata(gid: string, callback: (err: string, isMetadata: boolean, newGid: string) => void): void {
   aria2.tellStatus(gid, ['followedBy'], (err: any, res: any) => {
     if (err) {
       callback(err.message, null, null);
@@ -122,7 +122,7 @@ export function isDownloadMetadata(gid: string, callback: (err: string, isMetada
   });
 }
 
-export function getFileSize(gid: string, callback: (err: string, fileSize: number) => void) {
+export function getFileSize(gid: string, callback: (err: string, fileSize: number) => void): void {
   aria2.tellStatus(gid,
     ['totalLength'],
     (err: any, res: any) => {
@@ -148,7 +148,7 @@ interface DriveUploadCompleteCallback {
  * @param {number} fileSize The size of the file
  * @param {function} callback The function to call with the link to the uploaded file
  */
-export function uploadFile(dlDetails: dlDetails.DlVars, filePath: string, fileSize: number, callback: DriveUploadCompleteCallback) {
+export function uploadFile(dlDetails: DlVars, filePath: string, fileSize: number, callback: DriveUploadCompleteCallback): void {
 
   dlDetails.isUploading = true;
   var fileName = filenameUtils.getFileNameFromPath(filePath, null);
@@ -187,7 +187,7 @@ export function uploadFile(dlDetails: dlDetails.DlVars, filePath: string, fileSi
   }
 }
 
-function driveUploadFile(gid: string, filePath: string, fileName: string, fileSize: number, callback: DriveUploadCompleteCallback) {
+function driveUploadFile(gid: string, filePath: string, fileName: string, fileSize: number, callback: DriveUploadCompleteCallback): void {
   drive.uploadRecursive(filePath,
     constants.GDRIVE_PARENT_DIR_ID,
     (err: string, url: string) => {
@@ -195,13 +195,11 @@ function driveUploadFile(gid: string, filePath: string, fileName: string, fileSi
     });
 }
 
-export function stopDownload(gid: string, callback: () => void) {
-  aria2.remove(gid, () => {
-    callback();
-  });
+export function stopDownload(gid: string, callback: () => void): void {
+  aria2.remove(gid, callback);
 }
 
-export function addUri(uri: string, dlDir: string, callback: (err: any, gid: string) => void) {
+export function addUri(uri: string, dlDir: string, callback: (err: any, gid: string) => void): void {
   aria2.addUri([uri], { dir: `${constants.ARIA_DOWNLOAD_LOCATION}/${dlDir}` })
     .then((gid: string) => {
       callback(null, gid);

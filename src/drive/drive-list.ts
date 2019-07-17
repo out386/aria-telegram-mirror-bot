@@ -11,7 +11,7 @@ import dlUtils = require('../download_tools/utils');
  * @param {string} fileName The name of the file to search for
  * @param {function} callback A function to call with an error, or a human-readable message
  */
-export function listFiles (fileName:string, callback:(err:string, message:string)=> void) {
+export function listFiles (fileName:string, callback:(err:string, message:string)=> void): void {
   // Uncommenting the below line will prevent users from asking to list all files
   // if (fileName === '' || fileName ==='*' || fileName === '%') return;
 
@@ -41,7 +41,7 @@ export function listFiles (fileName:string, callback:(err:string, message:string
   });
 }
 
-function generateSearchQuery (fileName:string, parent:string) {
+function generateSearchQuery (fileName:string, parent:string): string {
   var q = '\'' + parent + '\' in parents and (';
   if (fileName.indexOf(' ') > -1) {
     for (var i = 0; i < 4; i++) {
@@ -68,7 +68,7 @@ function generateSearchQuery (fileName:string, parent:string) {
   return q;
 }
 
-function getMultipleFileLinks (files:any[]) {
+function getMultipleFileLinks (files:any[]): void {
   for (var i = 0; i < files.length; i++) {
     files[i]['url'] = utils.getFileLink(
       files[i]['id'],
@@ -77,7 +77,7 @@ function getMultipleFileLinks (files:any[]) {
   }
 }
 
-function generateFilesListMessage (files:any[]) {
+function generateFilesListMessage (files:any[]): string {
   var message = '';
   if (files.length > 0) {
     for (var i = 0; i < files.length; i++) {
