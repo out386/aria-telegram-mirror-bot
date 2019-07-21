@@ -3,10 +3,10 @@ import driveFile = require('./upload-file');
 import utils = require('./drive-utils');
 import { google, drive_v3 } from 'googleapis';
 import constants = require('../.constants.js');
-import { AxiosResponse } from 'axios';
+import { GaxiosResponse } from 'gaxios';
 
 
-export function uploadFileOrFolder(filePath: string, mime: string, parent: string, size:number, callback: (err: string, id: string) => void): void {
+export function uploadFileOrFolder(filePath: string, mime: string, parent: string, size: number, callback: (err: string, id: string) => void): void {
   driveAuth.call((err, auth) => {
     if (err) {
       callback(err, null);
@@ -15,7 +15,7 @@ export function uploadFileOrFolder(filePath: string, mime: string, parent: strin
     const drive = google.drive({ version: 'v3', auth });
 
     if (mime === 'application/vnd.google-apps.folder' || size === 0) {
-      createFolderOrEmpty(drive, filePath, parent, mime,callback);
+      createFolderOrEmpty(drive, filePath, parent, mime, callback);
     } else {
       driveFile.uploadGoogleDriveFile(parent, {
         filePath: filePath,
@@ -27,17 +27,18 @@ export function uploadFileOrFolder(filePath: string, mime: string, parent: strin
   });
 }
 
-function createFolderOrEmpty(drive: drive_v3.Drive, filePath: string, parent: string, mime:string, callback: (err: string, id: string) => void): void {
+function createFolderOrEmpty(drive: drive_v3.Drive, filePath: string, parent: string, mime: string,
+  callback: (err: string, id: string) => void): void {
   drive.files.create({
     // @ts-ignore Unknown property error
     fields: 'id',
-    resource: { 
+    requestBody: {
       mimeType: mime,
       name: filePath.substring(filePath.lastIndexOf('/') + 1),
       parents: [parent]
     }
   },
-    (err:Error, res:any) => {
+    (err: Error, res: any) => {
       if (err) {
         callback(err.message, null);
       } else {
@@ -46,7 +47,7 @@ function createFolderOrEmpty(drive: drive_v3.Drive, filePath: string, parent: st
     });
 }
 
-export function getSharableLink(fileId:string, isFolder:boolean, callback: (err: string, url: string) => void): void {
+export function getSharableLink(fileId: string, isFolder: boolean, callback: (err: string, url: string) => void): void {
   driveAuth.call((err, auth) => {
     if (err) {
       callback(err, null);
@@ -65,7 +66,7 @@ export function getSharableLink(fileId:string, isFolder:boolean, callback: (err:
 
 async function createPermissions(drive: drive_v3.Drive, fileId: string): Promise<any> {
   if (constants.DRIVE_FILE_PRIVATE && constants.DRIVE_FILE_PRIVATE.ENABLED) {
-    var req: AxiosResponse<drive_v3.Schema$Permission>[] = [];
+    var req: GaxiosResponse<drive_v3.Schema$Permission>[] = [];
 
     for (var email of constants.DRIVE_FILE_PRIVATE.EMAILS) {
       var perm = await drive.permissions.create({
