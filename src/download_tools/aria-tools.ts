@@ -9,7 +9,7 @@ import { DlVars } from '../dl_model/detail';
 
 const ariaOptions = {
   host: 'localhost',
-  port: constants.ARIA_PORT,
+  port: constants.ARIA_PORT ? constants.ARIA_PORT : 8210,
   secure: false,
   secret: constants.ARIA_SECRET,
   path: '/jsonrpc'
