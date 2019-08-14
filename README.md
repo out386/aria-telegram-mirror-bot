@@ -19,6 +19,12 @@ There is very little preventing users from using this to mirror pirated content.
 * `/cancelAll`: Cancel all mirroring tasks in all chats if a [SUDO_USERS](#Constants-description) member uses it, or cancel all mirroring tasks for a particular chat if one of that chat's admins use it. No one else can use this command.
 * `/list <filename>` : Send links to downloads with the `filename` substring in the name. In case of too many downloads, only show the most recent few. 
 
+#### Notes
+
+* **All commands except** `list` **can have the bot's username appended to them. See** `COMMANDS_USE_BOT_NAME` **under [constants description](#Constants-description).** This is useful if you have multiple instances of this bot in the same group.
+
+* While creating a Telegram bot in the [pre-installation](#Pre-installation]) section below, you might want to add the above commands to your new bot by using `/setcommand` in BotFather. This will cause a list of available bot commands to pop up in chats when you type `/`, and you can long press one of them to select it instead of typing out the entire command.
+
 ## Migrating from v1.0.0
 
 Aria-telegram-mirror-bot is now written in TypeScript. If you are migrating from v1.0.0, move your existing `.constants.js` to `src/.constants.js`, and re-read the [installation section](#Installation) and the [section on updating](#Updating), as some steps have changed.
