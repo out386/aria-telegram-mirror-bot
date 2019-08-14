@@ -1,9 +1,9 @@
-import constants = require('./.constants');
+import constants = require('../.constants');
 import http = require('http');
-import ariaTools = require('./download_tools/aria-tools');
+import ariaTools = require('../download_tools/aria-tools');
 import TelegramBot = require('node-telegram-bot-api');
-import details = require('./dl_model/detail');
-import dlm = require('./dl_model/dl-manager');
+import details = require('../dl_model/detail');
+import dlm = require('../dl_model/dl-manager');
 var dlManager = dlm.DlManager.getInstance();
 
 export async function deleteMsg(bot: TelegramBot, msg: TelegramBot.Message, delay?: number): Promise<any> {
