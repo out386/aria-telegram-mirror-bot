@@ -186,6 +186,8 @@ Run `git pull`, then run `tsc`. After compilation has finished, you can start th
 
 * **Trying to download anything gives a "Failed to start the download. Unauthorized" message:** [See #38](https://github.com/out386/aria-telegram-mirror-bot/issues/38). If it still doesn't work, something else might be running an aria2 RPC at the same port as the bot. Change [`ARIA_PORT`](#Constants-description) and try [#38](https://github.com/out386/aria-telegram-mirror-bot/issues/38) again.
 
+* **`tsc` gives errors like `Property 'SOMETHING' does not exist on type<...>` with red lines under `constants.<...>`:** Some new configs were added to [constants](#Constants-description) after you set up the bot, but your existing `./src/.constants.js` does not have them. Re-read [the constants section](#Constants-description), and add whatever property was added. Usually, you can also just ignore these particular errors and keep using the bot, because `tsc` will compile anyway, and there are default options that are used if you did not update your `.constants.js`.
+
 ## License
 The MIT License (MIT)
 
