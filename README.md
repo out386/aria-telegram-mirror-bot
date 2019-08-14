@@ -180,6 +180,12 @@ If `successful` is false, any or all of the fields of `file` might be absent. Ho
 
 Run `git pull`, then run `tsc`. After compilation has finished, you can start the bot as described in [the above section](#Starting-after-installation).
 
+## Common issues
+
+* **`tsc` silently dies, says, "Killed", or stays stuck forever:** Your machine does not have enough RAM. tsc needs at least 1GB. Increase your RAM if running on the cloud, or try  setting up a [swap](https://www.digitalocean.com/community/tutorials/how-to-add-swap-space-on-ubuntu-16-04) with a high swappiness.
+
+* **Trying to download anything gives a "Failed to start the download. Unauthorized" message:** [See #38](https://github.com/out386/aria-telegram-mirror-bot/issues/38). If it still doesn't work, something else might be running an aria2 RPC at the same port as the bot. Change [`ARIA_PORT`](#Constants-description) and try [#38](https://github.com/out386/aria-telegram-mirror-bot/issues/38) again.
+
 ## License
 The MIT License (MIT)
 
