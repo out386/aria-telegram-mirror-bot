@@ -114,6 +114,7 @@ This is a description of the fields in src/.constants.js:
 * `ARIA_DOWNLOAD_LOCATION_ROOT`: This is the mountpoint that contains ARIA_DOWNLOAD_LOCATION. This is used internally to calculate the space available before downloading.
 * `ARIA_FILTERED_DOMAINS`: The bot will refuse to download files from these domains. Can be an empty list.
 * `ARIA_FILTERED_FILENAMES`: The bot will refuse to completely download (or if already downloaded, then upload) files with any of these substrings in the file/top level directory name. Can be an empty list or left undefined.
+* `ARIA_PORT`: The port for the Aria2c RPC server. If you change this, make sure to update your aria.sh as well. Safe to leave this at the default value unless something else on your system is using that port.
 * `GDRIVE_PARENT_DIR_ID`: This is the ID of the Google Drive folder that files will be uploaded into. You will get this from step 4 of Pre-installation.
 * `SUDO_USERS`: This is a list of Telegram user IDs. These users can use the bot in any chat. Can be an empty list, if AUTHORIZED_CHATS is not empty.
 * `AUTHORIZED_CHATS`: This is a list of Telegram Chat IDs. Anyone in these chats can use the bot in that particular chat. Anyone not in one of these chats and not in SUDO_USERS cannot use the bot. Someone in one of the chats in this list can use the bot only in that chat, not elsewhere. Can be an empty list, if SUDO_USERS is not empty.
