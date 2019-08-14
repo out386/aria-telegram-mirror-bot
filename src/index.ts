@@ -9,6 +9,9 @@ import driveList = require('./drive/drive-list.js');
 import driveUtils = require('./drive/drive-utils.js');
 import details = require('./dl_model/detail');
 import filenameUtils = require('./download_tools/filename-utils');
+import { EventRegex } from './bot_utils/event_regex';
+
+const eventRegex = new EventRegex();
 const bot = new TelegramBot(constants.TOKEN, { polling: true });
 var websocketOpened = false;
 var statusInterval: NodeJS.Timeout;
@@ -18,7 +21,7 @@ initAria2();
 
 bot.on("polling_error", msg => console.error(msg.message));
 
-bot.onText(/^\/start/, (msg) => {
+bot.onText(eventRegex.start, (msg) => {
   if (msgTools.isAuthorized(msg) < 0) {
     msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
@@ -26,7 +29,7 @@ bot.onText(/^\/start/, (msg) => {
   }
 });
 
-bot.onText(/^\/mirrortar (.+)/i, (msg, match) => {
+bot.onText(eventRegex.mirrorTar, (msg, match) => {
   if (msgTools.isAuthorized(msg) < 0) {
     msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
@@ -34,7 +37,7 @@ bot.onText(/^\/mirrortar (.+)/i, (msg, match) => {
   }
 });
 
-bot.onText(/^\/mirror (.+)/i, (msg, match) => {
+bot.onText(eventRegex.mirror, (msg, match) => {
   if (msgTools.isAuthorized(msg) < 0) {
     msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
@@ -61,7 +64,7 @@ function mirror(msg: TelegramBot.Message, match: RegExpExecArray, isTar?: boolea
   }
 }
 
-bot.onText(/^\/mirrorStatus/i, (msg) => {
+bot.onText(eventRegex.mirrorStatus, (msg) => {
   if (msgTools.isAuthorized(msg) < 0) {
     msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
@@ -69,7 +72,7 @@ bot.onText(/^\/mirrorStatus/i, (msg) => {
   }
 });
 
-bot.onText(/^\/list (.+)/i, (msg, match) => {
+bot.onText(eventRegex.list, (msg, match) => {
   if (msgTools.isAuthorized(msg) < 0) {
     msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
@@ -83,7 +86,7 @@ bot.onText(/^\/list (.+)/i, (msg, match) => {
   }
 });
 
-bot.onText(/^\/getFolder/i, (msg) => {
+bot.onText(eventRegex.getFolder, (msg) => {
   if (msgTools.isAuthorized(msg) < 0) {
     msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
@@ -93,7 +96,7 @@ bot.onText(/^\/getFolder/i, (msg) => {
   }
 });
 
-bot.onText(/^\/cancelMirror/i, (msg) => {
+bot.onText(eventRegex.cancelMirror, (msg) => {
   var authorizedCode = msgTools.isAuthorized(msg);
   if (msg.reply_to_message) {
     var dlDetails = dlManager.getDownloadByMsgId(msg.reply_to_message);
@@ -120,7 +123,7 @@ bot.onText(/^\/cancelMirror/i, (msg) => {
   }
 });
 
-bot.onText(/^\/cancelAll/i, (msg) => {
+bot.onText(eventRegex.cancelAll, (msg) => {
   var authorizedCode = msgTools.isAuthorized(msg, true);
   if (authorizedCode === 0) {
     // One of SUDO_USERS. Cancel all downloads
