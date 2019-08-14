@@ -127,7 +127,7 @@ This is a description of the fields in src/.constants.js:
    * `host`: The address of the web server to notify.
    * `port`: The server port ¯\\\_(ツ)\_/¯
    * `path`: The server path ¯\\\_(ツ)\_/¯
-* `COMMANDS_USE_BOT_NAME`: The fields here decide whether to append the bot's usename to the end of commands or not.
+* `COMMANDS_USE_BOT_NAME`: The fields here decide whether to append the bot's usename to the end of commands or not. This works only for group chats, and gets ignored if you PM the bot.
   * `ENABLED`: If `true`, all bot commands have to have the bot's username (as below) appended to them. For example, `/mirror https://someweb.site/resource.tar` will become `/mirror@botName_bot https://someweb.site/resource.tar`. The only exception to this is the `/list` command, which will not have the bot's name appended. This allows having multiple non-conflicting mirror bots in the same group, and have them all reply to `/list`.
   * `NAME`: The username of the bot, as given in BotFather. Include the leading "@".
 

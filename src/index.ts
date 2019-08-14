@@ -21,7 +21,17 @@ initAria2();
 
 bot.on("polling_error", msg => console.error(msg.message));
 
-bot.onText(eventRegex.start, (msg) => {
+function setEventCallback(regexp: RegExp, regexpNoName: RegExp,
+  callback: ((msg: TelegramBot.Message, match?: RegExpExecArray) => void)): void {
+  bot.onText(regexpNoName, (msg, match) => {
+    // Return if the command didn't have the bot name for non PMs ("Bot name" could be blank depending on config)
+    if (msg.chat.type !== 'private' && !match[0].match(regexp))
+      return;
+    callback(msg, match);
+  });
+}
+
+setEventCallback(eventRegex.commandsRegex.start, eventRegex.commandsRegexNoName.start, (msg) => {
   if (msgTools.isAuthorized(msg) < 0) {
     msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
@@ -29,7 +39,7 @@ bot.onText(eventRegex.start, (msg) => {
   }
 });
 
-bot.onText(eventRegex.mirrorTar, (msg, match) => {
+setEventCallback(eventRegex.commandsRegex.mirrorTar, eventRegex.commandsRegexNoName.mirrorTar, (msg, match) => {
   if (msgTools.isAuthorized(msg) < 0) {
     msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
@@ -37,7 +47,7 @@ bot.onText(eventRegex.mirrorTar, (msg, match) => {
   }
 });
 
-bot.onText(eventRegex.mirror, (msg, match) => {
+setEventCallback(eventRegex.commandsRegex.mirror, eventRegex.commandsRegexNoName.mirror, (msg, match) => {
   if (msgTools.isAuthorized(msg) < 0) {
     msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
@@ -54,8 +64,8 @@ bot.onText(eventRegex.mirror, (msg, match) => {
  */
 function mirror(msg: TelegramBot.Message, match: RegExpExecArray, isTar?: boolean): void {
   if (websocketOpened) {
-    if (downloadUtils.isDownloadAllowed(match[1])) {
-      prepDownload(msg, match[1], isTar);
+    if (downloadUtils.isDownloadAllowed(match[2])) {
+      prepDownload(msg, match[2], isTar);
     } else {
       msgTools.sendMessage(bot, msg, `Download failed. Blacklisted URL.`);
     }
@@ -64,7 +74,7 @@ function mirror(msg: TelegramBot.Message, match: RegExpExecArray, isTar?: boolea
   }
 }
 
-bot.onText(eventRegex.mirrorStatus, (msg) => {
+setEventCallback(eventRegex.commandsRegex.mirrorStatus, eventRegex.commandsRegexNoName.mirrorStatus, (msg) => {
   if (msgTools.isAuthorized(msg) < 0) {
     msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
@@ -72,11 +82,11 @@ bot.onText(eventRegex.mirrorStatus, (msg) => {
   }
 });
 
-bot.onText(eventRegex.list, (msg, match) => {
+setEventCallback(eventRegex.commandsRegex.list, eventRegex.commandsRegexNoName.list, (msg, match) => {
   if (msgTools.isAuthorized(msg) < 0) {
     msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
-    driveList.listFiles(match[1], (err, res) => {
+    driveList.listFiles(match[2], (err, res) => {
       if (err) {
         msgTools.sendMessage(bot, msg, 'Failed to fetch the list of files');
       } else {
@@ -86,7 +96,7 @@ bot.onText(eventRegex.list, (msg, match) => {
   }
 });
 
-bot.onText(eventRegex.getFolder, (msg) => {
+setEventCallback(eventRegex.commandsRegex.getFolder, eventRegex.commandsRegexNoName.getFolder, (msg) => {
   if (msgTools.isAuthorized(msg) < 0) {
     msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
@@ -96,7 +106,7 @@ bot.onText(eventRegex.getFolder, (msg) => {
   }
 });
 
-bot.onText(eventRegex.cancelMirror, (msg) => {
+setEventCallback(eventRegex.commandsRegex.cancelMirror, eventRegex.commandsRegexNoName.cancelMirror, (msg) => {
   var authorizedCode = msgTools.isAuthorized(msg);
   if (msg.reply_to_message) {
     var dlDetails = dlManager.getDownloadByMsgId(msg.reply_to_message);
@@ -123,7 +133,7 @@ bot.onText(eventRegex.cancelMirror, (msg) => {
   }
 });
 
-bot.onText(eventRegex.cancelAll, (msg) => {
+setEventCallback(eventRegex.commandsRegex.cancelAll, eventRegex.commandsRegexNoName.cancelAll, (msg) => {
   var authorizedCode = msgTools.isAuthorized(msg, true);
   if (authorizedCode === 0) {
     // One of SUDO_USERS. Cancel all downloads

@@ -1,17 +1,14 @@
 import constants = require('../.constants');
+import regexps = require('./reg_exps');
 
 export class EventRegex {
-  readonly start: RegExp;
-  readonly mirrorTar: RegExp;
-  readonly mirror: RegExp;
-  readonly mirrorStatus: RegExp;
-  readonly list: RegExp;
-  readonly getFolder: RegExp;
-  readonly cancelMirror: RegExp;
-  readonly cancelAll: RegExp;
+
+  readonly commandsRegex: regexps.RegExps;
+  readonly commandsRegexNoName: regexps.RegExps;
 
   constructor() {
     var commands = ['^/start', '^/mirrorTar', '^/mirror', '^/mirrorStatus', '^/list', '^/getFolder', '^/cancelMirror', '^/cancelAll'];
+    var commandsNoName: string[] = [];
     var commandAfter = ['$', ' (.+)', ' (.+)', '$', ' (.+)', '$', '$', '$'];
 
     if (constants.COMMANDS_USE_BOT_NAME && constants.COMMANDS_USE_BOT_NAME.ENABLED) {
@@ -22,20 +19,20 @@ export class EventRegex {
         } else {
           commands[i] = command + constants.COMMANDS_USE_BOT_NAME.NAME + commandAfter[i];
         }
+        commandsNoName.push(this.getNamelessCommand(command, commandAfter[i]));
       });
     } else {
       commands.forEach((command, i) => {
         commands[i] = command + commandAfter[i];
+        commandsNoName.push(this.getNamelessCommand(command, commandAfter[i]));
       });
     }
 
-    this.start = new RegExp(commands[0], 'i');
-    this.mirrorTar = new RegExp(commands[1], 'i');
-    this.mirror = new RegExp(commands[2], 'i');
-    this.mirrorStatus = new RegExp(commands[3], 'i');
-    this.list = new RegExp(commands[4], 'i');
-    this.getFolder = new RegExp(commands[5], 'i');
-    this.cancelMirror = new RegExp(commands[6], 'i');
-    this.cancelAll = new RegExp(commands[7], 'i');
+    this.commandsRegex = new regexps.RegExps(commands);
+    this.commandsRegexNoName = new regexps.RegExps(commandsNoName);
+  }
+
+  private getNamelessCommand(command: string, after: string): string {
+    return `(${command}|${command}@[\\S]+)${after}`;
   }
 }
