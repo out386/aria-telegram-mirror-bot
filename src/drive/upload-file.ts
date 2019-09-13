@@ -77,7 +77,14 @@ function uploadChunk(filePath: string, chunk: Chunk, mimeType: string, uploadUrl
         return resolve(null);
       }
 
-      body = JSON.parse(body);
+      try {
+          body = JSON.parse(body);
+      } catch(e) {
+        // TODO: So far `body` has been 1 liners here. If large `body` is noticed, change this
+        // to dump `body` to a file instead.
+        console.log(body);
+        return resolve(null);
+      }
       if (body && body.id) {
         return resolve(body.id);
       } else {
