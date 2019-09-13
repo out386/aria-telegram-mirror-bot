@@ -77,7 +77,12 @@ function uploadChunk(filePath: string, chunk: Chunk, mimeType: string, uploadUrl
         return resolve(null);
       }
 
-      body = JSON.parse(body);
+      try {
+          body = JSON.parse(body);
+      } catch(e) {
+          console.log(e.message);
+          return resolve(null);
+      }
       if (body && body.id) {
         return resolve(body.id);
       } else {
