@@ -266,7 +266,7 @@ function prepDownload(msg: TelegramBot.Message, match: string, isTar: boolean): 
       console.error(message);
       cleanupDownload(gid, message);
     } else {
-      console.log(`download:${match} gid:${gid}`);
+      console.log(`gid: ${gid} download:${match}`);
       // Wait a second to give aria2 enough time to queue the download
       setTimeout(() => {
         dlManager.setStatusLock(msg, sendStatusMessage);
@@ -401,7 +401,7 @@ function ariaOnDownloadStart(gid: string, retry: number): void {
   var dlDetails = dlManager.getDownloadByGid(gid);
   if (dlDetails) {
     dlManager.moveDownloadToActive(dlDetails);
-    console.log(`Started ${gid}. Dir: ${dlDetails.downloadDir}.`);
+    console.log(`${gid}: Started. Dir: ${dlDetails.downloadDir}.`);
     updateAllStatus();
 
     ariaTools.getStatus(gid, (err, message, filename) => {
@@ -425,7 +425,7 @@ function ariaOnDownloadStart(gid: string, retry: number): void {
 function ariaOnDownloadStop(gid: string, retry: number): void {
   var dlDetails = dlManager.getDownloadByGid(gid);
   if (dlDetails) {
-    console.log('stop', gid);
+    console.log(`${gid}: Stopped`);
     var message = 'Download stopped.';
     if (dlDetails.isDownloadAllowed === 0) {
       message += ' Blacklisted file name.';
@@ -463,22 +463,22 @@ function ariaOnDownloadComplete(gid: string, retry: number): void {
           var filename = filenameUtils.getFileNameFromPath(file, null);
           dlDetails.isUploading = true;
           if (handleDisallowedFilename(dlDetails, filename)) {
-            console.log(`${gid} complete. Filename: ${filename}. Starting upload.`);
+            console.log(`${gid}: Completed. Filename: ${filename}. Starting upload.`);
             ariaTools.uploadFile(dlDetails, file, size, driveUploadCompleteCallback);
           } else {
             var reason = 'Upload failed. Blacklisted file name.';
-            console.log(`${gid} blacklisted. Filename: ${filename}.`);
+            console.log(`${gid}: Blacklisted. Filename: ${filename}.`);
             cleanupDownload(gid, reason);
           }
         });
       } else {
         ariaTools.isDownloadMetadata(gid, (err, isMetadata, newGid) => {
           if (err) {
-            console.error(`onDownloadComplete: Failed to check if ${gid} was a metadata download: ${err}`);
+            console.error(`${gid}: onDownloadComplete: Failed to check if it was a metadata download: ${err}`);
             var message = 'Upload failed. Could not check if the file is metadata.';
             cleanupDownload(gid, message);
           } else if (isMetadata) {
-            console.log(`Changing GID from ${gid} to ${newGid}`);
+            console.log(`${gid} Changed to ${newGid}`);
             dlManager.changeDownloadGid(gid, newGid);
           } else {
             console.error('onDownloadComplete: No files - not metadata.');
@@ -492,7 +492,7 @@ function ariaOnDownloadComplete(gid: string, retry: number): void {
     // OnDownloadComplete probably got called before prepDownload's startDownload callback. Highly unlikely. Retry.
     setTimeout(() => ariaOnDownloadComplete(gid, retry + 1), 500);
   } else {
-    console.error(`onDownloadComplete: DlDetails still empty for ${gid}. Giving up.`);
+    console.error(`${gid}: onDownloadComplete: DlDetails still empty. Giving up.`);
   }
 }
 
@@ -503,10 +503,10 @@ function ariaOnDownloadError(gid: string, retry: number): void {
       var message: string;
       if (err) {
         message = 'Failed to download.';
-        console.error(`${gid} failed. Failed to get the error message. ${err}`);
+        console.error(`${gid}: failed. Failed to get the error message. ${err}`);
       } else {
         message = `Failed to download. ${res}`;
-        console.error(`${gid} failed. ${res}`);
+        console.error(`${gid}: failed. ${res}`);
       }
       cleanupDownload(gid, message, null, dlDetails);
     });
@@ -516,7 +516,7 @@ function ariaOnDownloadError(gid: string, retry: number): void {
     // metadata hasn't been called yet. Fairly likely. Retry.
     setTimeout(() => ariaOnDownloadError(gid, retry + 1), 500);
   } else {
-    console.error(`onDownloadError: DlDetails still empty for ${gid}. Giving up.`);
+    console.error(`${gid}: onDownloadError: DlDetails still empty. Giving up.`);
   }
 }
 
@@ -542,11 +542,11 @@ function driveUploadCompleteCallback(err: string, gid: string, url: string, file
   var finalMessage;
   if (err) {
     var message = err;
-    console.error(`uploadFile: Failed to upload ${gid} - ${filePath}: ${message}`);
+    console.error(`${gid}: Failed to upload - ${filePath}: ${message}`);
     finalMessage = `Failed to upload <code>${fileName}</code> to Drive.${message}`;
     cleanupDownload(gid, finalMessage);
   } else {
-    console.log(`Uploaded ${gid}`);
+    console.log(`${gid}: Uploaded `);
     if (fileSize) {
       var fileSizeStr = downloadUtils.formatSize(fileSize);
       finalMessage = `<a href='${url}'>${fileName}</a> (${fileSizeStr})`;
