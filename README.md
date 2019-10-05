@@ -18,12 +18,13 @@ There is very little preventing users from using this to mirror pirated content.
 * `/cancelMirror`: Cancel a particular mirroring task. To use this, send it as a reply to the message that started the download that you want to cancel. Only the person who started the task, SUDO_USERS, and chat admins can use this command.
 * `/cancelAll`: Cancel all mirroring tasks in all chats if a [SUDO_USERS](#Constants-description) member uses it, or cancel all mirroring tasks for a particular chat if one of that chat's admins use it. No one else can use this command.
 * `/list <filename>` : Send links to downloads with the `filename` substring in the name. In case of too many downloads, only show the most recent few. 
+* `/getfolder` : Send link of drive mirror folder.
 
 #### Notes
 
 * **All commands except** `list` **can have the bot's username appended to them. See** `COMMANDS_USE_BOT_NAME` **under [constants description](#Constants-description).** This is useful if you have multiple instances of this bot in the same group.
 
-* While creating a Telegram bot in the [pre-installation](#Pre-installation]) section below, you might want to add the above commands to your new bot by using `/setcommand` in BotFather. This will cause a list of available bot commands to pop up in chats when you type `/`, and you can long press one of them to select it instead of typing out the entire command.
+* While creating a Telegram bot in the [pre-installation](#pre-installation]) section below, you might want to add the above commands to your new bot by using `/setcommand` in BotFather, make sure all the commands are in lower case. This will cause a list of available bot commands to pop up in chats when you type `/`, and you can long press one of them to select it instead of typing out the entire command.
 
 ## Migrating from v1.0.0
 
