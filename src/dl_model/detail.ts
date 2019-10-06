@@ -6,6 +6,7 @@ export class DlVars {
   gid: string;
   readonly tgFromId: number;
   readonly tgUsername: string;
+  readonly tgRepliedUsername: string;
   readonly tgChatId: number;
   readonly tgMessageId: number;
   readonly startTime: number;
@@ -16,19 +17,24 @@ export class DlVars {
   readonly downloadDir: string;
 
   constructor(gid: string, msg: TelegramBot.Message, readonly isTar: boolean, downloadDir: string) {
-    var username: string;
-    if (msg.from.username) {
-      username = `@${msg.from.username}`;
-    } else {
-      username = `<a href="tg://user?id=${msg.from.id}">${msg.from.first_name}</a>`;
+    this.tgUsername = getUsername(msg);
+    if (msg.reply_to_message) {
+      this.tgRepliedUsername = getUsername(msg.reply_to_message);
     }
 
     this.gid = gid;
     this.downloadDir = downloadDir;
     this.tgFromId = msg.from.id;
-    this.tgUsername = username;
     this.tgChatId = msg.chat.id;
     this.tgMessageId = msg.message_id;
     this.startTime = new Date().getTime();
+  }
+}
+
+function getUsername(msg: TelegramBot.Message): string {
+  if (msg.from.username) {
+    return `@${msg.from.username}`;
+  } else {
+    return `<a href="tg://user?id=${msg.from.id}">${msg.from.first_name}</a>`;
   }
 }

@@ -376,6 +376,9 @@ function cleanupDownload(gid: string, message: string, url?: string, dlDetails?:
     if (!wasCancelAlled) {
       // If the dl was stopped with a cancelAll command, a message has already been sent to the chat.
       // Do not send another one.
+      if (dlDetails.tgRepliedUsername) {
+        message += `\ncc: ${dlDetails.tgRepliedUsername}`;
+      }
       msgTools.sendMessageReplyOriginal(bot, dlDetails, message)
         .catch((err) => {
           console.error(`cleanupDownload sendMessage error: ${err.message}`);

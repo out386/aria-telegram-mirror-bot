@@ -6,3 +6,4 @@ client_secret.json
 credentials.json
 npm-debug.log
 out/
+package-lock.json
