@@ -36,7 +36,7 @@ export function editMessage(bot: TelegramBot, msg: TelegramBot.Message, text: st
 
 export function sendMessage(bot: TelegramBot, msg: TelegramBot.Message, text: string, delay?: number,
   callback?: (res: TelegramBot.Message) => void, quickDeleteOriginal?: boolean): void {
-  if (!delay) delay = 5000;
+  if (!delay) delay = 10000;
   bot.sendMessage(msg.chat.id, text, {
     reply_to_message_id: msg.message_id,
     parse_mode: 'HTML'
