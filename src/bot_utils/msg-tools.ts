@@ -109,9 +109,9 @@ export function isAdmin(bot: TelegramBot, msg: TelegramBot.Message, callback: (e
  * @param {number} originGroup The Telegram chat ID of the group where the download started
  * @param {string} driveURL The URL of the uploaded file
  */
-export function notifyExternal(successful: boolean, gid: string, originGroup: number, driveURL?: string): void {
+export function notifyExternal(dlDetails: details.DlVars, successful: boolean, gid: string, originGroup: number, driveURL?: string): void {
   if (!constants.DOWNLOAD_NOTIFY_TARGET || !constants.DOWNLOAD_NOTIFY_TARGET.enabled) return;
-  ariaTools.getStatus(gid, (err, message, filename, filesize) => {
+  ariaTools.getStatus(dlDetails, (err, message, filename, filesize) => {
     var name;
     var size;
     if (!err) {

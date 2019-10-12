@@ -1,6 +1,7 @@
 import fs = require('fs');
 import mime = require('mime-types');
 import gdrive = require('./drive/drive-upload');
+import { DlVars } from './dl_model/detail';
 
 /**
  * Recursively uploads a directory or a file to Google Drive. Also makes this upload
@@ -9,28 +10,29 @@ import gdrive = require('./drive/drive-upload');
  * @param {string} parent The ID of the Drive folder to upload into
  * @param {function} callback A function to call with an error or the public Drive link
  */
-export function uploadRecursive(path: string, parent: string, callback: (err: string, url: string) => void): void {
+export function uploadRecursive(dlDetails: DlVars, path: string, parent: string, callback: (err: string, url: string) => void): void {
   fs.stat(path, (err, stat) => {
     if (err) {
       callback(err.message, null);
       return;
     }
     if (stat.isDirectory()) {
-      gdrive.uploadFileOrFolder(path, 'application/vnd.google-apps.folder', parent, 0, (err, fileId) => {
-        if (err) {
-          callback(err, null);
-        } else {
-          walkSubPath(path, fileId, (err) => {
-            if (err) {
-              callback(err, null);
-            } else {
-              gdrive.getSharableLink(fileId, true, callback);
-            }
-          });
-        }
-      });
+      gdrive.uploadFileOrFolder(dlDetails, path, 'application/vnd.google-apps.folder', parent, 0,
+        (err, fileId) => {
+          if (err) {
+            callback(err, null);
+          } else {
+            walkSubPath(dlDetails, path, fileId, (err) => {
+              if (err) {
+                callback(err, null);
+              } else {
+                gdrive.getSharableLink(fileId, true, callback);
+              }
+            });
+          }
+        });
     } else {
-      processFileOrDir(path, parent, (err: string, fileId: string) => {
+      processFileOrDir(dlDetails, path, parent, (err: string, fileId: string) => {
         if (err) {
           callback(err, null);
         } else {
@@ -41,24 +43,24 @@ export function uploadRecursive(path: string, parent: string, callback: (err: st
   });
 }
 
-function walkSubPath(path: string, parent: string, callback: (err: string) => void): void {
+function walkSubPath(dlDetails: DlVars, path: string, parent: string, callback: (err: string) => void): void {
   fs.readdir(path, (err, files) => {
     if (err) {
       callback(err.message);
     } else {
-      walkSingleDir(path, files, parent, callback);
+      walkSingleDir(dlDetails, path, files, parent, callback);
     }
   });
 }
 
-function walkSingleDir(path: string, files: string[], parent: string, callback: (err: string) => void): void {
+function walkSingleDir(dlDetails: DlVars, path: string, files: string[], parent: string, callback: (err: string) => void): void {
   if (files.length === 0) {
     callback(null);
     return;
   }
 
   var uploadNext = function (position: number): void {
-    processFileOrDir(path + '/' + files[position], parent, (err: string) => {
+    processFileOrDir(dlDetails, path + '/' + files[position], parent, (err: string) => {
       if (err) {
         callback(err);
       } else {
@@ -73,7 +75,7 @@ function walkSingleDir(path: string, files: string[], parent: string, callback: 
   uploadNext(0);
 }
 
-function processFileOrDir(path: string, parent: string, callback: (err: string, fileId?: string) => void): void {
+function processFileOrDir(dlDetails: DlVars, path: string, parent: string, callback: (err: string, fileId?: string) => void): void {
   fs.stat(path, (err, stat) => {
     if (err) {
       callback(err.message);
@@ -81,11 +83,11 @@ function processFileOrDir(path: string, parent: string, callback: (err: string, 
     }
     if (stat.isDirectory()) {
       // path is a directory. Do not call the callback until the path has been completely traversed.
-      gdrive.uploadFileOrFolder(path, 'application/vnd.google-apps.folder', parent, 0, (err: string, fileId: string) => {
+      gdrive.uploadFileOrFolder(dlDetails, path, 'application/vnd.google-apps.folder', parent, 0, (err: string, fileId: string) => {
         if (err) {
           callback(err);
         } else {
-          walkSubPath(path, fileId, callback);
+          walkSubPath(dlDetails, path, fileId, callback);
         }
       });
     } else {
@@ -93,7 +95,7 @@ function processFileOrDir(path: string, parent: string, callback: (err: string, 
       if (!mimeType) {
         mimeType = 'application/octet-stream';
       }
-      gdrive.uploadFileOrFolder(path, mimeType, parent, stat.size, (err: string, fileId: string) => {
+      gdrive.uploadFileOrFolder(dlDetails, path, mimeType, parent, stat.size, (err: string, fileId: string) => {
         if (err) {
           callback(err);
         } else {

@@ -386,9 +386,9 @@ function cleanupDownload(gid: string, message: string, url?: string, dlDetails?:
     }
 
     if (url) {
-      msgTools.notifyExternal(true, gid, dlDetails.tgChatId, url);
+      msgTools.notifyExternal(dlDetails, true, gid, dlDetails.tgChatId, url);
     } else {
-      msgTools.notifyExternal(false, gid, dlDetails.tgChatId);
+      msgTools.notifyExternal(dlDetails, false, gid, dlDetails.tgChatId);
     }
     dlManager.removeCancelledDls(gid);
     dlManager.deleteDownload(gid);
@@ -407,7 +407,7 @@ function ariaOnDownloadStart(gid: string, retry: number): void {
     console.log(`${gid}: Started. Dir: ${dlDetails.downloadDir}.`);
     updateAllStatus();
 
-    ariaTools.getStatus(gid, (err, message, filename) => {
+    ariaTools.getStatus(dlDetails, (err, message, filename) => {
       if (!err) {
         handleDisallowedFilename(dlDetails, filename);
       }

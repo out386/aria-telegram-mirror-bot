@@ -4,9 +4,10 @@ import utils = require('./drive-utils');
 import { google, drive_v3 } from 'googleapis';
 import constants = require('../.constants.js');
 import { GaxiosResponse } from 'gaxios';
+import { DlVars } from '../dl_model/detail';
 
 
-export function uploadFileOrFolder(filePath: string, mime: string, parent: string, size: number, callback: (err: string, id: string) => void): void {
+export function uploadFileOrFolder(dlDetails: DlVars, filePath: string, mime: string, parent: string, size: number, callback: (err: string, id: string) => void): void {
   driveAuth.call((err, auth) => {
     if (err) {
       callback(err, null);
@@ -17,7 +18,7 @@ export function uploadFileOrFolder(filePath: string, mime: string, parent: strin
     if (mime === 'application/vnd.google-apps.folder' || size === 0) {
       createFolderOrEmpty(drive, filePath, parent, mime, callback);
     } else {
-      driveFile.uploadGoogleDriveFile(parent, {
+      driveFile.uploadGoogleDriveFile(dlDetails, parent, {
         filePath: filePath,
         mimeType: mime
       })

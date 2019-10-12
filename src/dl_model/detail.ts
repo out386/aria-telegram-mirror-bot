@@ -1,6 +1,9 @@
 import TelegramBot = require('node-telegram-bot-api');
 export class DlVars {
   isUploading: boolean;
+  uploadedBytes: number;
+  uploadedBytesLast: number;
+  lastUploadCheckTimestamp: number;
   isDownloadAllowed: number;
   isDownloading: boolean;
   gid: string;
@@ -28,6 +31,8 @@ export class DlVars {
     this.tgChatId = msg.chat.id;
     this.tgMessageId = msg.message_id;
     this.startTime = new Date().getTime();
+    this.uploadedBytes = 0;
+    this.uploadedBytesLast = 0;
   }
 }
 

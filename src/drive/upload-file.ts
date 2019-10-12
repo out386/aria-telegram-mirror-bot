@@ -5,6 +5,7 @@ import request = require('request');
 import fs = require('fs');
 import driveAuth = require('./drive-auth');
 import driveUtils = require('./drive-utils');
+import { DlVars } from '../dl_model/detail';
 
 interface Chunk {
   bstart: number;
@@ -20,14 +21,14 @@ interface Chunk {
    */
 function getChunks(filePath: string, start: number): Chunk[] {
   var allsize = fs.statSync(filePath).size;
-  var sep = allsize < (150 * 1024 * 1024) ? allsize : (150 * 1024 * 1024) - 1;
+  var sep = allsize < (20 * 1024 * 1024) ? allsize : (20 * 1024 * 1024) - 1;
   var ar = [];
   for (var i = start; i < allsize; i += sep) {
     var bstart = i;
     var bend = i + sep - 1 < allsize ? i + sep - 1 : allsize - 1;
     var cr = 'bytes ' + bstart + '-' + bend + '/' + allsize;
     var clen = bend != allsize - 1 ? sep : allsize - i;
-    var stime = allsize < (150 * 1024 * 1024) ? 5000 : 10000;
+    var stime = allsize < (20 * 1024 * 1024) ? 5000 : 10000;
     ar.push({
       bstart: bstart,
       bend: bend,
@@ -78,8 +79,8 @@ function uploadChunk(filePath: string, chunk: Chunk, mimeType: string, uploadUrl
       }
 
       try {
-          body = JSON.parse(body);
-      } catch(e) {
+        body = JSON.parse(body);
+      } catch (e) {
         // TODO: So far `body` has been 1 liners here. If large `body` is noticed, change this
         // to dump `body` to a file instead.
         console.log(body);
@@ -95,7 +96,7 @@ function uploadChunk(filePath: string, chunk: Chunk, mimeType: string, uploadUrl
   });
 }
 
-export function uploadGoogleDriveFile(parent: string, file: { filePath: string, mimeType: string }): Promise<string> {
+export function uploadGoogleDriveFile(dlDetails: DlVars, parent: string, file: { filePath: string; mimeType: string }): Promise<string> {
   var fileName = file.filePath.substring(file.filePath.lastIndexOf('/') + 1);
   return new Promise((resolve, reject) => {
     var size = fs.statSync(file.filePath).size;
@@ -124,13 +125,18 @@ export function uploadGoogleDriveFile(parent: string, file: { filePath: string, 
           let fileId = null;
           try {
             let i = 0;
+            let lastUploadedBytes = 0;
             while (i < chunks.length) {
               // last chunk will return the file id
               fileId = await uploadChunk(file.filePath, chunks[i], file.mimeType, response.headers.location);
               if ((typeof fileId === 'object') && (fileId !== null)) {
                 chunks = getChunks(file.filePath, fileId.last);
                 i = 0;
+                dlDetails.uploadedBytes = dlDetails.uploadedBytes - lastUploadedBytes + fileId.last;
+                lastUploadedBytes = fileId.last;
               } else {
+                dlDetails.uploadedBytes = dlDetails.uploadedBytes - lastUploadedBytes + chunks[i].bend;
+                lastUploadedBytes = chunks[i].bend;
                 i++;
               }
             }

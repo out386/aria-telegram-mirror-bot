@@ -72,17 +72,31 @@ export function getAriaFilePath(gid: string, callback: (err: string, file: strin
  * @param {string} gid The Aria2 GID of the download
  * @param {function} callback The function to call on completion. (err, message, filename, filesize).
  */
-export function getStatus(gid: string, callback: (err: string, message: string, filename: string, filesize: string) => void): void{
-  aria2.tellStatus(gid,
+export function getStatus(dlDetails: DlVars,
+  callback: (err: string, message: string, filename: string, filesizeStr: string) => void): void {
+  aria2.tellStatus(dlDetails.gid,
     ['status', 'totalLength', 'completedLength', 'downloadSpeed', 'files'],
     (err: any, res: any) => {
       if (err) {
         callback(err.message, null, null, null);
       } else if (res.status === 'active') {
         var statusMessage = downloadUtils.generateStatusMessage(parseFloat(res.totalLength),
-          parseFloat(res.completedLength),
-          parseFloat(res.downloadSpeed),
-          res.files);
+          parseFloat(res.completedLength), parseFloat(res.downloadSpeed), res.files, false);
+        callback(null, statusMessage.message, statusMessage.filename, statusMessage.filesize);
+      } else if (dlDetails.isUploading) {
+        var downloadSpeed: number;
+        var time = new Date().getTime();
+        if (!dlDetails.lastUploadCheckTimestamp) {
+          downloadSpeed = 0;
+        } else {
+          downloadSpeed = (dlDetails.uploadedBytes - dlDetails.uploadedBytesLast)
+            / ((time - dlDetails.lastUploadCheckTimestamp) / 1000);
+        }
+        dlDetails.uploadedBytesLast = dlDetails.uploadedBytes;
+        dlDetails.lastUploadCheckTimestamp = time;
+
+        var statusMessage = downloadUtils.generateStatusMessage(parseFloat(res.totalLength),
+          dlDetails.uploadedBytes, downloadSpeed, res.files, true);
         callback(null, statusMessage.message, statusMessage.filename, statusMessage.filesize);
       } else {
         var filePath = filenameUtils.findAriaFilePath(res['files']);
@@ -156,13 +170,13 @@ export function uploadFile(dlDetails: DlVars, filePath: string, fileSize: number
   if (dlDetails.isTar) {
     if (filePath === realFilePath) {
       // If there is only one file, do not archive
-      driveUploadFile(dlDetails.gid, realFilePath, fileName, fileSize, callback);
+      driveUploadFile(dlDetails, realFilePath, fileName, fileSize, callback);
     } else {
       diskspace.check(constants.ARIA_DOWNLOAD_LOCATION_ROOT, (err: string, res: any) => {
         if (err) {
           console.log('uploadFile: diskspace: ' + err);
           // Could not archive, so upload normally
-          driveUploadFile(dlDetails.gid, realFilePath, fileName, fileSize, callback);
+          driveUploadFile(dlDetails, realFilePath, fileName, fileSize, callback);
           return;
         }
         if (res['free'] > fileSize) {
@@ -173,25 +187,26 @@ export function uploadFile(dlDetails: DlVars, filePath: string, fileSize: number
               callback(err, dlDetails.gid, null, null, null, null);
             } else {
               console.log('Archive complete');
-              driveUploadFile(dlDetails.gid, realFilePath + '.tar', destName, size, callback);
+              driveUploadFile(dlDetails, realFilePath + '.tar', destName, size, callback);
             }
           });
         } else {
           console.log('uploadFile: Not enough space, uploading without archiving');
-          driveUploadFile(dlDetails.gid, realFilePath, fileName, fileSize, callback);
+          driveUploadFile(dlDetails, realFilePath, fileName, fileSize, callback);
         }
       });
     }
   } else {
-    driveUploadFile(dlDetails.gid, realFilePath, fileName, fileSize, callback);
+    driveUploadFile(dlDetails, realFilePath, fileName, fileSize, callback);
   }
 }
 
-function driveUploadFile(gid: string, filePath: string, fileName: string, fileSize: number, callback: DriveUploadCompleteCallback): void {
-  drive.uploadRecursive(filePath,
+function driveUploadFile(dlDetails: DlVars, filePath: string, fileName: string, fileSize: number, callback: DriveUploadCompleteCallback): void {
+  drive.uploadRecursive(dlDetails,
+    filePath,
     constants.GDRIVE_PARENT_DIR_ID,
     (err: string, url: string) => {
-      callback(err, gid, url, filePath, fileName, fileSize);
+      callback(err, dlDetails.gid, url, filePath, fileName, fileSize);
     });
 }
 

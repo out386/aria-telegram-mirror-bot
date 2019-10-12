@@ -56,23 +56,17 @@ function getSingleStatus(dlDetails: details.DlVars, msg?: TelegramBot.Message): 
     }
 
     if (authorizedCode > -1) {
-      ariaTools.getStatus(dlDetails.gid, (err, message, filename) => {
+      ariaTools.getStatus(dlDetails, (err, message, filename) => {
         if (err) {
           resolve({
             message: `Error: ${dlDetails.gid} - ${err}`
           });
         } else {
-          if (dlDetails.isUploading) {
-            resolve({
-              message: `<i>${filename}</i> - Uploading`
-            });
-          } else {
-            resolve({
-              message: message,
-              filename: filename,
-              dlDetails: dlDetails
-            });
-          }
+          resolve({
+            message: message,
+            filename: filename,
+            dlDetails: dlDetails
+          });
         }
       });
     } else {
@@ -137,7 +131,8 @@ export function getStatusMessage(): Promise<StatusAll> {
  * @param {any[]} files The list of files in the download
  * @returns {StatusMessage} An object containing a printable status message and the file name
  */
-export function generateStatusMessage(totalLength: number, completedLength: number, speed: number, files: any[]): StatusMessage {
+export function generateStatusMessage(totalLength: number, completedLength: number, speed: number,
+  files: any[], isUploading: boolean): StatusMessage {
   var filePath = filenameUtils.findAriaFilePath(files);
   var fileName = filenameUtils.getFileNameFromPath(filePath.path, filePath.inputPath, filePath.downloadUri);
   var progress;
@@ -150,7 +145,8 @@ export function generateStatusMessage(totalLength: number, completedLength: numb
   var progressString = generateProgress(progress);
   var speedStr = formatSize(speed);
   var eta = downloadETA(totalLength, completedLength, speed);
-  var message = `Filename: <i>${fileName}</i>\nSize: <code>${totalLengthStr}</code>\nProgress: <code>${progressString}</code>\nSpeed: <code>${speedStr}ps</code>\nETA: <code>${eta}</code>`;
+  var type = isUploading ? 'Uploading' : 'Filename';
+  var message = `${type}: <i>${fileName}</i>\nSize: <code>${totalLengthStr}</code>\nProgress: <code>${progressString}</code>\nSpeed: <code>${speedStr}ps</code>\nETA: <code>${eta}</code>`;
   var status = {
     message: message,
     filename: fileName,
