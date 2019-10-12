@@ -1,6 +1,6 @@
 {
   "name": "mirror-bot",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "A telegram bot to mirror files to Google Drive",
   "main": "index.js",
   "scripts": {
