@@ -10,7 +10,9 @@ export async function deleteMsg(bot: TelegramBot, msg: TelegramBot.Message, dela
   if (delay) await sleep(delay);
 
   bot.deleteMessage(msg.chat.id, msg.message_id.toString())
-    .catch();
+    .catch(err => {
+      console.log(`Failed to delete message. Does the bot have message delete permissions for this chat? ${err.message}`);
+    });
 }
 
 export function editMessage(bot: TelegramBot, msg: TelegramBot.Message, text: string, suppressError?: string): Promise<any> {
