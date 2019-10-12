@@ -188,6 +188,6 @@ export class DlManager {
 }
 
 interface StatusAll {
-  msg: TelegramBot.Message,
-  lastStatus: string
+  msg: TelegramBot.Message;
+  lastStatus: string;
 }
