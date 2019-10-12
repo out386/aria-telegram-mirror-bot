@@ -10,6 +10,7 @@ import driveUtils = require('./drive/drive-utils.js');
 import details = require('./dl_model/detail');
 import filenameUtils = require('./download_tools/filename-utils');
 import { EventRegex } from './bot_utils/event_regex';
+import { exec } from 'child_process';
 
 const eventRegex = new EventRegex();
 const bot = new TelegramBot(constants.TOKEN, { polling: true });
@@ -52,6 +53,19 @@ setEventCallback(eventRegex.commandsRegex.mirror, eventRegex.commandsRegexNoName
     msgTools.sendUnauthorizedMessage(bot, msg);
   } else {
     mirror(msg, match);
+  }
+});
+
+setEventCallback(eventRegex.commandsRegex.disk, eventRegex.commandsRegexNoName.disk, (msg) => {
+  if (msgTools.isAuthorized(msg) < 0) {
+    msgTools.sendUnauthorizedMessage(bot, msg);
+  } else {
+    exec(`df --output="size,used,avail" -h "${constants.ARIA_DOWNLOAD_LOCATION_ROOT}" | tail -n1`,
+      (err, res) => {
+        var disk = res.trim().split(/\s+/);
+        msgTools.sendMessage(bot, msg, `Total space: ${disk[0]}B\nUsed: ${disk[1]}B\nAvailable: ${disk[2]}B`);
+      }
+    );
   }
 });
 
