@@ -1,8 +1,6 @@
 name: Update package.json
 
-on:
-  schedule:
-  - cron: 0 0 * * 3
+on: [push]
 
 jobs:
   build:
