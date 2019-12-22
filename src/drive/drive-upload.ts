@@ -49,21 +49,27 @@ function createFolderOrEmpty(drive: drive_v3.Drive, filePath: string, parent: st
     });
 }
 
-export function getSharableLink(fileId: string, isFolder: boolean, callback: (err: string, url: string) => void): void {
-  driveAuth.call((err, auth) => {
-    if (err) {
-      callback(err, null);
-      return;
-    }
-    const drive = google.drive({ version: 'v3', auth });
-    createPermissions(drive, fileId)
-      .then(() => {
-        callback(null, utils.getFileLink(fileId, isFolder));
-      })
-      .catch(err => {
-        callback(err.message, null);
-      });
-  });
+export function getSharableLink(fileId: string, isFolder: boolean, 
+  callback: (err: string, url: string, isFolder: boolean) => void): void {
+
+  if (!constants.IS_TEAM_DRIVE || (constants.IS_TEAM_DRIVE && !isFolder)) {
+    driveAuth.call((err, auth) => {
+      if (err) {
+        callback(err, null, false);
+        return;
+      }
+      const drive = google.drive({ version: 'v3', auth });
+      createPermissions(drive, fileId)
+        .then(() => {
+          callback(null, utils.getFileLink(fileId, isFolder), isFolder);
+        })
+        .catch(err => {
+          callback(err.message, null, false);
+        });
+    });
+  } else {
+    callback(null, utils.getFileLink(fileId, isFolder), isFolder);
+  }
 }
 
 async function createPermissions(drive: drive_v3.Drive, fileId: string): Promise<any> {

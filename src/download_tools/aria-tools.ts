@@ -149,7 +149,7 @@ export function getFileSize(gid: string, callback: (err: string, fileSize: numbe
 }
 
 interface DriveUploadCompleteCallback {
-  (err: string, gid: string, url: string, filePath: string, fileName: string, fileSize: number): void;
+  (err: string, gid: string, url: string, filePath: string, fileName: string, fileSize: number, isFolder: boolean): void;
 }
 
 /**
@@ -184,7 +184,7 @@ export function uploadFile(dlDetails: DlVars, filePath: string, fileSize: number
           var destName = fileName + '.tar';
           tar.archive(realFilePath, destName, (err: string, size: number) => {
             if (err) {
-              callback(err, dlDetails.gid, null, null, null, null);
+              callback(err, dlDetails.gid, null, null, null, null, false);
             } else {
               console.log('Archive complete');
               driveUploadFile(dlDetails, realFilePath + '.tar', destName, size, callback);
@@ -205,8 +205,8 @@ function driveUploadFile(dlDetails: DlVars, filePath: string, fileName: string, 
   drive.uploadRecursive(dlDetails,
     filePath,
     constants.GDRIVE_PARENT_DIR_ID,
-    (err: string, url: string) => {
-      callback(err, dlDetails.gid, url, filePath, fileName, fileSize);
+    (err: string, url: string, isFolder: boolean) => {
+      callback(err, dlDetails.gid, url, filePath, fileName, fileSize, isFolder);
     });
 }
 

@@ -10,21 +10,21 @@ import { DlVars } from './dl_model/detail';
  * @param {string} parent The ID of the Drive folder to upload into
  * @param {function} callback A function to call with an error or the public Drive link
  */
-export function uploadRecursive(dlDetails: DlVars, path: string, parent: string, callback: (err: string, url: string) => void): void {
+export function uploadRecursive(dlDetails: DlVars, path: string, parent: string, callback: (err: string, url: string, isFolder: boolean) => void): void {
   fs.stat(path, (err, stat) => {
     if (err) {
-      callback(err.message, null);
+      callback(err.message, null, false);
       return;
     }
     if (stat.isDirectory()) {
       gdrive.uploadFileOrFolder(dlDetails, path, 'application/vnd.google-apps.folder', parent, 0,
         (err, fileId) => {
           if (err) {
-            callback(err, null);
+            callback(err, null, false);
           } else {
             walkSubPath(dlDetails, path, fileId, (err) => {
               if (err) {
-                callback(err, null);
+                callback(err, null, false);
               } else {
                 gdrive.getSharableLink(fileId, true, callback);
               }
@@ -34,7 +34,7 @@ export function uploadRecursive(dlDetails: DlVars, path: string, parent: string,
     } else {
       processFileOrDir(dlDetails, path, parent, (err: string, fileId: string) => {
         if (err) {
-          callback(err, null);
+          callback(err, null, false);
         } else {
           gdrive.getSharableLink(fileId, false, callback);
         }

@@ -555,7 +555,9 @@ function initAria2(): void {
 }
 
 
-function driveUploadCompleteCallback(err: string, gid: string, url: string, filePath: string, fileName: string, fileSize: number): void {
+function driveUploadCompleteCallback(err: string, gid: string, url: string, filePath: string,
+  fileName: string, fileSize: number, isFolder: boolean): void {
+
   var finalMessage;
   if (err) {
     var message = err;
@@ -569,6 +571,9 @@ function driveUploadCompleteCallback(err: string, gid: string, url: string, file
       finalMessage = `<a href='${url}'>${fileName}</a> (${fileSizeStr})`;
     } else {
       finalMessage = `<a href='${url}'>${fileName}</a>`;
+    }
+    if (constants.IS_TEAM_DRIVE && isFolder) {
+      finalMessage += '\n\n<i>Folders in Shared Drives can only be shared with members of the drive. Mirror as an archive if you need public links.</i>';
     }
     cleanupDownload(gid, finalMessage, url);
   }

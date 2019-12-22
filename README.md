@@ -131,6 +131,7 @@ This is a description of the fields in src/.constants.js:
 * `COMMANDS_USE_BOT_NAME`: The fields here decide whether to append the bot's usename to the end of commands or not. This works only for group chats, and gets ignored if you PM the bot.
   * `ENABLED`: If `true`, all bot commands have to have the bot's username (as below) appended to them. For example, `/mirror https://someweb.site/resource.tar` will become `/mirror@botName_bot https://someweb.site/resource.tar`. The only exception to this is the `/list` command, which will not have the bot's name appended. This allows having multiple non-conflicting mirror bots in the same group, and have them all reply to `/list`.
   * `NAME`: The username of the bot, as given in BotFather. Include the leading "@".
+* `IS_TEAM_DRIVE`: Set to `true` if you are mirroring to a Shared Drive.
 
 ## Starting after installation
 
@@ -188,6 +189,9 @@ Run `git pull`, then run `tsc`. After compilation has finished, you can start th
 * **Trying to download anything gives a "Failed to start the download. Unauthorized" message:** [See #38](https://github.com/out386/aria-telegram-mirror-bot/issues/38). If it still doesn't work, something else might be running an aria2 RPC at the same port as the bot. Change [`ARIA_PORT`](#Constants-description) and try [#38](https://github.com/out386/aria-telegram-mirror-bot/issues/38) again.
 
 * **`tsc` gives errors like `Property 'SOMETHING' does not exist on type<...>` with red lines under `constants.<...>`:** Some new configs were added to [constants](#Constants-description) after you set up the bot, but your existing `./src/.constants.js` does not have them. Re-read [the constants section](#Constants-description), and add whatever property was added. Usually, you can also just ignore these particular errors and keep using the bot, because `tsc` will compile anyway, and there are default options that are used if you did not update your `.constants.js`.
+
+* **Cannot get public links for folders if using Shared Drives**: Shared Drives do not support sharing folders to non members. The download link the bot gives only works for members of the Shared drive. If you need public links, use `/mirrorTar` to mirror the folder as a single file instead.  
+<font size=2>This feature is planned. See [upcoming releases](https://support.google.com/a/table/7539891) (search for "Folder sharing in shared drives").</font>
 
 ## License
 The MIT License (MIT)
