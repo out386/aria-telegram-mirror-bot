@@ -33,6 +33,7 @@ function createFolderOrEmpty(drive: drive_v3.Drive, filePath: string, parent: st
   drive.files.create({
     // @ts-ignore Unknown property error
     fields: 'id',
+    supportsAllDrives: true,
     requestBody: {
       mimeType: mime,
       name: filePath.substring(filePath.lastIndexOf('/') + 1),
@@ -72,6 +73,7 @@ async function createPermissions(drive: drive_v3.Drive, fileId: string): Promise
     for (var email of constants.DRIVE_FILE_PRIVATE.EMAILS) {
       var perm = await drive.permissions.create({
         fileId: fileId,
+        supportsAllDrives: true,
         requestBody: {
           role: 'reader',
           type: 'user',
@@ -84,6 +86,7 @@ async function createPermissions(drive: drive_v3.Drive, fileId: string): Promise
   } else {
     return drive.permissions.create({
       fileId: fileId,
+      supportsAllDrives: true,
       requestBody: {
         role: 'reader',
         type: 'anyone'

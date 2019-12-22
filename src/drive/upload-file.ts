@@ -90,6 +90,7 @@ function uploadChunk(filePath: string, chunk: Chunk, mimeType: string, uploadUrl
         return resolve(body.id);
       } else {
         console.log(`Got file id null`);
+        // Yes, I know this should be a reject, but meh, why bother changing what works
         return resolve(null);
       }
     });

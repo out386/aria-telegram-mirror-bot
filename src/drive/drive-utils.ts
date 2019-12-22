@@ -10,7 +10,10 @@ export function getPublicUrlRequestHeaders(size: number, mimeType: string, token
   return {
     method: 'POST',
     url: 'https://www.googleapis.com/upload/drive/v3/files',
-    qs: { uploadType: 'resumable' },
+    qs: {
+      uploadType: 'resumable',
+      supportsAllDrives: true
+    },
     headers:
     {
       'Postman-Token': '1d58fdd0-0408-45fa-a45d-fc703bff724a',

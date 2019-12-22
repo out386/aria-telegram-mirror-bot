@@ -27,7 +27,9 @@ export function listFiles (fileName:string, callback:(err:string, message:string
       fields: 'files(id, name, mimeType, size)',
       q: generateSearchQuery(fileName, constants.GDRIVE_PARENT_DIR_ID),
       orderBy: 'modifiedTime desc',
-      pageSize: 20
+      pageSize: 20,
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true
     },
     (err:Error, res:any) => {
       if (err) {

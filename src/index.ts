@@ -560,7 +560,7 @@ function driveUploadCompleteCallback(err: string, gid: string, url: string, file
   if (err) {
     var message = err;
     console.error(`${gid}: Failed to upload - ${filePath}: ${message}`);
-    finalMessage = `Failed to upload <code>${fileName}</code> to Drive.${message}`;
+    finalMessage = `Failed to upload <code>${fileName}</code> to Drive. ${message}`;
     cleanupDownload(gid, finalMessage);
   } else {
     console.log(`${gid}: Uploaded `);
