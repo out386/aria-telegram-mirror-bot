@@ -13,7 +13,8 @@
 
 ## Then, do these commands:
 	heroku git:remote -a xxx
-	
+	heroku stack:set container
+## Then, type this:
 	./magic.sh
 
 ### Warning: Never push to a public source with this commit included, this file contain your important credentials.
