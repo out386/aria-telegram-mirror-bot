@@ -16,12 +16,18 @@ KillMode=mixed
 KillSignal=SIGQUIT
 TimeoutStopSec=5s
 
-; Use private /tmp and /var/tmp, which are discarded after the process stops.
+# Security
 PrivateTmp=true
-; Use a minimal /dev (May bring additional security if switched to 'true', but it may not work on Raspberry Pi's or other devices, so it has been disabled in this dist.)
-PrivateDevices=true
-; Make /usr, /boot, /etc and possibly some more folders read-only.
 ProtectSystem=full
+NoNewPrivileges=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+PrivateDevices=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_NETLINK
+RestrictNamespaces=true
+RestrictRealtime=true
+SystemCallArchitectures=native
 
 [Install]
 WantedBy=multi-user.target
