@@ -196,4 +196,4 @@ Run `git pull`, then run `tsc`. After compilation has finished, you can start th
 ## License
 The MIT License (MIT)
 
-Copyright © 2019 out386
+Copyright © 2020 out386
