@@ -15,25 +15,16 @@ export async function deleteMsg(bot: TelegramBot, msg: TelegramBot.Message, dela
     });
 }
 
-export function editMessage(bot: TelegramBot, msg: TelegramBot.Message, text: string, suppressError?: string): Promise<any> {
-  return new Promise((resolve, reject) => {
-    if (msg && msg.chat && msg.chat.id && msg.message_id) {
-      bot.editMessageText(text, {
-        chat_id: msg.chat.id,
-        message_id: msg.message_id,
-        parse_mode: 'HTML'
-      })
-        .then(resolve)
-        .catch(err => {
-          if (err.message !== suppressError) {
-            console.log(`editMessage error: ${err.message}`);
-          }
-          reject(err);
-        });
-    } else {
-      resolve();
-    }
-  });
+export function editMessage(bot: TelegramBot, msg: TelegramBot.Message, text: string): Promise<any> {
+  if (msg && msg.chat && msg.chat.id && msg.message_id) {
+    return bot.editMessageText(text, {
+      chat_id: msg.chat.id,
+      message_id: msg.message_id,
+      parse_mode: 'HTML'
+    });
+  } else {
+    return Promise.resolve();
+  }
 }
 
 export function sendMessage(bot: TelegramBot, msg: TelegramBot.Message, text: string, delay?: number,

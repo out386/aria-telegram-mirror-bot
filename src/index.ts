@@ -293,7 +293,7 @@ function prepDownload(msg: TelegramBot.Message, match: string, isTar: boolean): 
 /**
  * Sends a single status message for all active and queued downloads.
  */
-function sendStatusMessage(msg: TelegramBot.Message, keepForever?: boolean): Promise<any> {
+function sendStatusMessage(msg: TelegramBot.Message, keepForever?: boolean): Promise<void> {
   var lastStatus = dlManager.getStatus(msg.chat.id);
 
   if (lastStatus) {
@@ -344,10 +344,12 @@ function updateAllStatus(): void {
         // Do not update the status if the message remains the same.
         // Otherwise, the Telegram API starts complaining.
         if (res.message !== status.lastStatus) {
-          msgTools.editMessage(bot, status.msg, res.message, staleStatusReply)
+          msgTools.editMessage(bot, status.msg, res.message)
             .catch(err => {
               if (err.message === staleStatusReply) {
                 dlManager.deleteStatus(status.msg.chat.id);
+              } else {
+                console.log(`updateAllStatus: Failed to edit message: ${err.message}`);
               }
             });
           status.lastStatus = res.message;

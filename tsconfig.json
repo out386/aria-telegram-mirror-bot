@@ -4,7 +4,6 @@
     "target": "es6",
     "module": "commonjs",
     "noImplicitAny": true,
-    "noImplicitReturns": true,
     "allowJs": true,
     "sourceMap": false
   },
